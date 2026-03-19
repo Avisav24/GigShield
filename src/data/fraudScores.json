@@ -1,0 +1,10 @@
+{
+  "normal": {
+    "personaLabel": "Normal user",
+    "score": 24
+  },
+  "suspicious": {
+    "personaLabel": "Suspicious user",
+    "score": 88
+  }
+}

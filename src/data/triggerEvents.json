@@ -1,0 +1,42 @@
+[
+  {
+    "id": "heavy-rain",
+    "label": "Heavy Rain",
+    "buttonLabel": "Simulate Heavy Rain",
+    "payoutByPlan": {
+      "basic": 280,
+      "standard": 430,
+      "pro": 620
+    }
+  },
+  {
+    "id": "heatwave",
+    "label": "Heatwave",
+    "buttonLabel": "Simulate Heatwave",
+    "payoutByPlan": {
+      "basic": 240,
+      "standard": 390,
+      "pro": 560
+    }
+  },
+  {
+    "id": "aqi-spike",
+    "label": "AQI Spike",
+    "buttonLabel": "Simulate AQI Spike",
+    "payoutByPlan": {
+      "basic": 260,
+      "standard": 410,
+      "pro": 590
+    }
+  },
+  {
+    "id": "platform-outage",
+    "label": "Platform Outage",
+    "buttonLabel": "Simulate Platform Outage",
+    "payoutByPlan": {
+      "basic": 300,
+      "standard": 470,
+      "pro": 700
+    }
+  }
+]

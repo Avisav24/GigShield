@@ -1,0 +1,20 @@
+[
+  {
+    "id": "basic",
+    "name": "Basic",
+    "weeklyPremium": 79,
+    "coverageHours": "07:00 - 22:00"
+  },
+  {
+    "id": "standard",
+    "name": "Standard",
+    "weeklyPremium": 129,
+    "coverageHours": "06:00 - 23:00"
+  },
+  {
+    "id": "pro",
+    "name": "Pro",
+    "weeklyPremium": 179,
+    "coverageHours": "24 x 7"
+  }
+]
