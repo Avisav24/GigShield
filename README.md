@@ -9,20 +9,24 @@ AI-powered parametric income insurance for food delivery workers. Protect your e
 ## 📸 Screenshots
 
 ### Landing Page
+
 ![GigShield Landing Page](./docs/screenshots/landing-page.png)
-*Hero page introducing GigShield's coverage promise with product features and call-to-action buttons.*
+_Hero page introducing GigShield's coverage promise with product features and call-to-action buttons._
 
 ### Dashboard – Coverage Overview
+
 ![Dashboard Coverage](./docs/screenshots/dashboard-coverage.png)
-*Real-time earnings protection and plan details at a glance.*
+_Real-time earnings protection and plan details at a glance._
 
 ### Dashboard – Trigger Simulation
+
 ![Trigger Simulation](./docs/screenshots/trigger-simulation.png)
-*Simulate weather and platform events to see instant payout calculations.*
+_Simulate weather and platform events to see instant payout calculations._
 
 ### Dashboard – Fraud Detection
-![Fraud Detection](./docs/screenshots/fraud-detection.png)
-*Risk scoring and verification requirements for worker protection.*
+
+![Fraud Detection](./docs/screenshots/fraud-detection.png?v=2)
+_Risk scoring and verification requirements for worker protection._
 
 ---
 
@@ -52,6 +56,7 @@ AI-powered parametric income insurance for food delivery workers. Protect your e
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+ and npm
 
 ### Installation
@@ -119,6 +124,7 @@ src/
 5. **Activity Log**: Monitor your delivery activity and engagement status
 
 ### Example Triggers
+
 - **Heavy Rain**: ₹150-500 depending on plan
 - **Heatwave**: ₹200-600 depending on plan
 - **Air Quality Index Spike**: ₹150-500 depending on plan
@@ -129,12 +135,14 @@ src/
 ## 🎨 Design System
 
 Custom color palette:
+
 - **Coal** (#1a1a1a): Primary dark color
 - **Electric** (#00d9ff): Accent/highlight color
 - **Signal** (#ff6b35): Warning/alert color
 - **Moss** (#2d614a): Success/positive color
 
 Typography:
+
 - **Display**: Archivo (bold, statements)
 - **Body**: Space Grotesk (readable, clean)
 
