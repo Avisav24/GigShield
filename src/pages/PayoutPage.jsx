@@ -1,11 +1,44 @@
 import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import LanguageToggle from "../components/LanguageToggle";
 import SelfieVerificationPanel from "../components/SelfieVerificationPanel";
 import { useSiteLanguage } from "../utils/siteLanguage";
 import { selectLabel } from "../utils/i18n";
 import { formatCurrency } from "../utils/format";
-import { getPayoutReceipt, savePayoutReceipt, clearPayoutReceipt } from "../utils/payoutReceipt";
+import { getSession } from "../utils/session";
+import userProfile from "../data/userProfile.json";
+import { runPayoutSecurityChecks } from "../utils/payoutSecurity";
+import { pushNotification } from "../utils/notifications";
+import { trackEvent } from "../utils/observability";
+import {
+  clearPayoutReceipt,
+  getFailureReasonLabel,
+  getPayoutReceipt,
+  payoutFailureReasonCodes,
+  savePayoutReceipt,
+  transitionPayoutLifecycle,
+} from "../utils/payoutReceipt";
+
+const lifecycleFlow = [
+  "pending-verification",
+  "verified",
+  "processing",
+  "settled",
+  "failed",
+];
+
+function getLifecycleLabel(languageMode, status) {
+  const labels = {
+    "pending-verification": selectLabel(languageMode, "Pending Verification", "सत्यापन लंबित"),
+    verified: selectLabel(languageMode, "Verified", "सत्यापित"),
+    processing: selectLabel(languageMode, "Processing", "प्रोसेसिंग"),
+    settled: selectLabel(languageMode, "Settled", "सेटल्ड"),
+    failed: selectLabel(languageMode, "Failed", "विफल"),
+  };
+
+  return labels[status] || status;
+}
 
 function getStatusStyles(status) {
   const styles = {
@@ -21,19 +54,28 @@ function getStatusStyles(status) {
 }
 
 function PayoutPage() {
+  const navigate = useNavigate();
   const { languageMode, setLanguageMode } = useSiteLanguage();
+  const session = getSession();
+  const workerCity = session?.city || userProfile.city;
   const [receiptState, setReceiptState] = useState(() => getPayoutReceipt());
-  const [verificationState, setVerificationState] = useState({
-    status: "idle",
-    gesture: "",
-    gestureKey: "",
-    issuedAt: "",
-    verifiedAt: "",
-    evidence: null,
+  const [verificationState, setVerificationState] = useState(() => {
+    const initialReceipt = getPayoutReceipt();
+    const alreadyVerified = initialReceipt?.lifecycleStatus === "verified";
+    return {
+      status: alreadyVerified ? "verified" : "idle",
+      gesture: "",
+      gestureKey: "",
+      issuedAt: "",
+      verifiedAt: alreadyVerified ? (initialReceipt?.lifecycleUpdatedAt || "") : "",
+      evidence: initialReceipt?.receivedWithVerification || null,
+    };
   });
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const receipt = receiptState;
-
+  const strictVerificationRequired = receipt?.riskLevel === "High";
+  const isLifecycleVerified = receipt?.lifecycleStatus === "verified";
   const gestureOptions = useMemo(
     () => [
       { key: "open_palm", label: "Show an open palm (hold 3 seconds)" },
@@ -51,6 +93,7 @@ function PayoutPage() {
     ],
     [],
   );
+  const selfieVerified = verificationState.status === "verified";
 
   const handleGenerateChallenge = () => {
     const randomGesture = gestureOptions[Math.floor(Math.random() * gestureOptions.length)];
@@ -65,12 +108,27 @@ function PayoutPage() {
   };
 
   const handleApproveVerification = (evidence) => {
+    const verifiedAt = new Date().toISOString();
     setVerificationState((current) => ({
       ...current,
       status: "verified",
-      verifiedAt: new Date().toISOString(),
+      verifiedAt,
       evidence: evidence ?? null,
     }));
+
+    if (receipt && receipt.lifecycleStatus === "pending-verification") {
+      const verifiedReceipt = transitionPayoutLifecycle(
+        receipt,
+        "verified",
+        "Selfie verification passed",
+        {
+          verifiedAt,
+          receivedWithVerification: evidence ?? null,
+        },
+      );
+      savePayoutReceipt(verifiedReceipt);
+      setReceiptState(verifiedReceipt);
+    }
   };
 
   const handleResetVerification = () => {
@@ -82,9 +140,20 @@ function PayoutPage() {
       verifiedAt: "",
       evidence: null,
     });
-  };
 
-  const selfieVerified = verificationState.status === "verified";
+    if (receipt && receipt.lifecycleStatus === "verified" && !receipt.receivedAt) {
+      const pendingReceipt = transitionPayoutLifecycle(
+        receipt,
+        "pending-verification",
+        "Verification reset by user",
+        {
+          verifiedAt: "",
+        },
+      );
+      savePayoutReceipt(pendingReceipt);
+      setReceiptState(pendingReceipt);
+    }
+  };
 
   const canReceive = useMemo(() => {
     if (!receipt) {
@@ -99,27 +168,166 @@ function PayoutPage() {
     if ((receipt.payoutAmount ?? 0) <= 0) {
       return false;
     }
-    return selfieVerified;
-  }, [receipt, selfieVerified]);
+    if (!strictVerificationRequired) {
+      return true;
+    }
 
-  const handleReceive = () => {
-    if (!receipt || !canReceive) {
+    return selfieVerified || isLifecycleVerified;
+  }, [receipt, selfieVerified, isLifecycleVerified, strictVerificationRequired]);
+
+  const canRetry = useMemo(() => {
+    if (!receipt) {
+      return false;
+    }
+
+    if (receipt.lifecycleStatus !== "failed") {
+      return false;
+    }
+
+    if (Number(receipt.retryCount || 0) >= 3) {
+      return false;
+    }
+
+    return true;
+  }, [receipt]);
+
+  const handleRetryFailedPayout = () => {
+    if (!receipt) {
       return;
     }
 
-    const next = {
-      ...receipt,
-      receivedAt: new Date().toISOString(),
-      receivedWithVerification: verificationState.evidence ?? null,
-    };
+    const nextRetryCount = Number(receipt.retryCount || 0) + 1;
+    if (nextRetryCount > 3) {
+      const blockedRetry = transitionPayoutLifecycle(
+        receipt,
+        "failed",
+        "Retry limit exceeded",
+        {
+          retryCount: Number(receipt.retryCount || 0),
+          failureReasonCode: payoutFailureReasonCodes.RETRY_LIMIT_EXCEEDED,
+          failureReason: getFailureReasonLabel(payoutFailureReasonCodes.RETRY_LIMIT_EXCEEDED),
+        },
+      );
+      savePayoutReceipt(blockedRetry);
+      setReceiptState(blockedRetry);
+      return;
+    }
 
-    savePayoutReceipt(next);
-    setReceiptState(next);
+    const resetReceipt = transitionPayoutLifecycle(
+      receipt,
+      "pending-verification",
+      `Retry attempt ${nextRetryCount}`,
+      {
+        retryCount: nextRetryCount,
+        failureReasonCode: "",
+        failureReason: "",
+        receivedAt: "",
+      },
+    );
+
+    savePayoutReceipt(resetReceipt);
+    setReceiptState(resetReceipt);
+    setVerificationState({
+      status: "idle",
+      gesture: "",
+      gestureKey: "",
+      issuedAt: "",
+      verifiedAt: "",
+      evidence: null,
+    });
+  };
+
+  const handleReceive = () => {
+    if (!receipt || !canReceive || isProcessing) {
+      return;
+    }
+
+    if (strictVerificationRequired && !(selfieVerified || isLifecycleVerified)) {
+      pushNotification({
+        type: "warning",
+        title: "Verification needed",
+        message: "Complete strict selfie + liveness checks for high-risk claims.",
+      });
+      return;
+    }
+
+    const securityResult = runPayoutSecurityChecks({
+      evidence: verificationState.evidence || receipt.receivedWithVerification || null,
+      workerCity,
+      strictVerification: strictVerificationRequired,
+    });
+
+    if (!securityResult.ok) {
+      const failedReceipt = transitionPayoutLifecycle(
+        receipt,
+        "failed",
+        `Security check failed: ${securityResult.reason}`,
+        {
+          failureReasonCode: securityResult.reasonCode,
+          failureReason: securityResult.reason,
+          securityCheck: securityResult,
+        },
+      );
+      savePayoutReceipt(failedReceipt);
+      setReceiptState(failedReceipt);
+      setIsProcessing(false);
+      pushNotification({
+        type: "error",
+        title: "Payout failed",
+        message: securityResult.reason,
+      });
+      trackEvent("payout_failed", {
+        payoutId: receipt.payoutId,
+        reasonCode: securityResult.reasonCode,
+      });
+      return;
+    }
+
+    const processingReceipt = transitionPayoutLifecycle(
+      receipt,
+      "processing",
+      "Payout request submitted for settlement",
+      {
+        securityCheck: securityResult,
+      },
+    );
+    savePayoutReceipt(processingReceipt);
+    setReceiptState(processingReceipt);
+    setIsProcessing(true);
+
+    window.setTimeout(() => {
+      const settledReceipt = transitionPayoutLifecycle(
+        processingReceipt,
+        "settled",
+        "Payout settled successfully",
+        {
+          receivedAt: new Date().toISOString(),
+          receivedWithVerification:
+            verificationState.evidence ?? processingReceipt.receivedWithVerification ?? null,
+          failureReason: "",
+        },
+      );
+
+      savePayoutReceipt(settledReceipt);
+      setReceiptState(settledReceipt);
+      setIsProcessing(false);
+      pushNotification({
+        type: "success",
+        title: "Payout settled",
+        message: `Receipt ${settledReceipt.payoutId} has been settled successfully.`,
+      });
+      trackEvent("payout_settled", {
+        payoutId: settledReceipt.payoutId,
+        amount: settledReceipt.payoutAmount,
+      });
+      navigate("/payout/received");
+    }, 1200);
   };
 
   const handleClear = () => {
     clearPayoutReceipt();
     setReceiptState(null);
+    setIsProcessing(false);
   };
 
   return (
@@ -177,8 +385,37 @@ function PayoutPage() {
             </section>
           ) : (
             <>
+              <section className="rounded-xl border border-coal-200 bg-white p-4 sm:p-5">
+                <p className="kicker">{selectLabel(languageMode, "Payout Lifecycle", "भुगतान जीवनचक्र")}</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {lifecycleFlow.map((step) => {
+                    const active = receipt.lifecycleStatus === step;
+                    const settled = receipt.lifecycleStatus === "settled";
+                    const stepReached =
+                      settled && step !== "failed"
+                        ? lifecycleFlow.indexOf(step) <= lifecycleFlow.indexOf("settled")
+                        : step === receipt.lifecycleStatus;
+
+                    return (
+                      <span
+                        key={step}
+                        className={`rounded-full border px-3 py-1 text-xs font-semibold ${
+                          active
+                            ? "border-coal-900 bg-coal-900 text-white"
+                            : stepReached
+                              ? "border-moss-300 bg-moss-50 text-moss-700"
+                              : "border-coal-200 bg-coal-50 text-coal-600"
+                        }`}
+                      >
+                        {getLifecycleLabel(languageMode, step)}
+                      </span>
+                    );
+                  })}
+                </div>
+              </section>
+
               <SelfieVerificationPanel
-                requiresVerification
+                requiresVerification={strictVerificationRequired}
                 verificationState={verificationState}
                 onGenerateChallenge={handleGenerateChallenge}
                 onApproveVerification={handleApproveVerification}
@@ -186,12 +423,24 @@ function PayoutPage() {
                 languageMode={languageMode}
               />
 
-              {!selfieVerified && (receipt.status === "paid" || receipt.status === "capped") ? (
+              {!(selfieVerified || isLifecycleVerified) &&
+              strictVerificationRequired &&
+              (receipt.status === "paid" || receipt.status === "capped") ? (
                 <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
                   {selectLabel(
                     languageMode,
-                    "Selfie verification required before receiving payout.",
-                    "भुगतान प्राप्त करने से पहले सेल्फी सत्यापन ज़रूरी है।",
+                    "Complete selfie verification to receive payout.",
+                    "भुगतान पाने के लिए सेल्फी सत्यापन पूरा करें।",
+                  )}
+                </p>
+              ) : null}
+
+              {!strictVerificationRequired ? (
+                <p className="rounded-lg border border-moss-200 bg-moss-50 px-3 py-2 text-xs font-semibold text-moss-700">
+                  {selectLabel(
+                    languageMode,
+                    "Low/Medium risk fast path: strict verification is not required.",
+                    "लो/मीडियम जोखिम फास्ट पाथ: सख्त सत्यापन आवश्यक नहीं।",
                   )}
                 </p>
               ) : null}
@@ -224,6 +473,22 @@ function PayoutPage() {
                       {receipt.status}
                     </p>
                     <p>
+                      <span className="font-semibold">{selectLabel(languageMode, "Payout ID", "भुगतान आईडी")}</span>: {" "}
+                      {receipt.payoutId || "-"}
+                    </p>
+                    <p>
+                      <span className="font-semibold">{selectLabel(languageMode, "Lifecycle", "जीवनचक्र")}</span>: {" "}
+                      {getLifecycleLabel(languageMode, receipt.lifecycleStatus || "pending-verification")}
+                    </p>
+                    <p>
+                      <span className="font-semibold">{selectLabel(languageMode, "Failure code", "विफलता कोड")}</span>: {" "}
+                      {receipt.failureReasonCode || "-"}
+                    </p>
+                    <p>
+                      <span className="font-semibold">{selectLabel(languageMode, "Failure reason", "विफलता कारण")}</span>: {" "}
+                      {receipt.failureReasonCode ? getFailureReasonLabel(receipt.failureReasonCode) : "-"}
+                    </p>
+                    <p>
                       <span className="font-semibold">{selectLabel(languageMode, "Created", "बनाया गया")}</span>: {" "}
                       {receipt.createdAt ? new Date(receipt.createdAt).toLocaleString() : ""}
                     </p>
@@ -237,9 +502,29 @@ function PayoutPage() {
                 </div>
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  <button type="button" onClick={handleReceive} disabled={!canReceive} className="primary-btn">
-                    {selectLabel(languageMode, "Receive payout", "भुगतान प्राप्त करें")}
+                  <button
+                    type="button"
+                    onClick={handleReceive}
+                    disabled={!canReceive || isProcessing}
+                    className="primary-btn"
+                  >
+                    {isProcessing
+                      ? selectLabel(languageMode, "Processing...", "प्रोसेसिंग...")
+                      : selectLabel(languageMode, "Receive payout", "भुगतान प्राप्त करें")}
                   </button>
+                  {receipt.receivedAt ? (
+                    <Link to="/payout/received" className="secondary-btn">
+                      {selectLabel(languageMode, "Open received page", "प्राप्त पेज खोलें")}
+                    </Link>
+                  ) : null}
+                  {canRetry ? (
+                    <button type="button" onClick={handleRetryFailedPayout} className="secondary-btn">
+                      {selectLabel(languageMode, "Retry failed payout", "विफल भुगतान पुनः प्रयास")}
+                    </button>
+                  ) : null}
+                  <Link to="/payout/history" className="secondary-btn">
+                    {selectLabel(languageMode, "View payout history", "भुगतान इतिहास देखें")}
+                  </Link>
                   <button type="button" onClick={handleClear} className="secondary-btn">
                     {selectLabel(languageMode, "Clear receipt", "रसीद हटाएं")}
                   </button>

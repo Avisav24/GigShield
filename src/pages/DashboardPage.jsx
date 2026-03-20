@@ -5,7 +5,6 @@ import ActivityPanel from "../components/ActivityPanel";
 import EarningsSnapshot from "../components/EarningsSnapshot";
 import FraudDetectionIndicator from "../components/FraudDetectionIndicator";
 import PlanSummary from "../components/PlanSummary";
-import SelfieVerificationPanel from "../components/SelfieVerificationPanel";
 import TriggerSimulationPanel from "../components/TriggerSimulationPanel";
 import LanguageToggle from "../components/LanguageToggle";
 import activityData from "../data/activityData.json";
@@ -17,31 +16,32 @@ import { formatCurrency } from "../utils/format";
 import { calculateWeeklyPremium } from "../utils/pricing";
 import { selectLabel } from "../utils/i18n";
 import { useSiteLanguage } from "../utils/siteLanguage";
-import { getRiskLevelFromScore, requiresVerification } from "../utils/fraud";
+import { getRiskLevelFromScore } from "../utils/fraud";
 import {
   applyTriggerToEarnings,
   getDailyPayoutCap,
   getPayoutForTrigger,
 } from "../utils/payout";
 import { clearSession, getSession } from "../utils/session";
-import { savePayoutReceipt } from "../utils/payoutReceipt";
+import { createPayoutReceipt, getPayoutHistory, savePayoutReceipt } from "../utils/payoutReceipt";
+import {
+  appendTriggerAuditEvent,
+  evaluateTriggerRules,
+  fetchWeatherReliability,
+  getTriggerAuditEvents,
+  getTriggerConfidenceScore,
+} from "../utils/triggerEngine";
+import { pushNotification } from "../utils/notifications";
+import { trackEvent } from "../utils/observability";
 
 const selectedPlanStorageKey = "gigshieldSelectedPlanId";
-const verificationWindowMs = 10 * 60 * 1000;
-const gestureOptions = [
-  { key: "open_palm", label: "Show an open palm (hold 3 seconds)" },
-  { key: "fist", label: "Show a closed fist (hold 3 seconds)" },
-  { key: "thumbs_up", label: "Show a thumbs up (hold 3 seconds)" },
-  { key: "peace", label: "Show a peace sign (hold 3 seconds)" },
-  { key: "point_up", label: "Point up with index finger (hold 3 seconds)" },
-  { key: "ok", label: "Make an OK sign (hold 3 seconds)" },
-  { key: "three", label: "Show three fingers (hold 3 seconds)" },
-  { key: "four", label: "Show four fingers (hold 3 seconds)" },
-  { key: "both_hands", label: "Hold both hands in frame (hold 3 seconds)" },
-  { key: "wave", label: "Wave (move left-right twice, then hold)" },
-  { key: "move_closer", label: "Move hand closer to camera, then hold" },
-  { key: "move_farther", label: "Move hand farther from camera, then hold" },
-];
+const onboardingStorageKey = "gigshieldOnboardingCompleted";
+const cityCoordinates = {
+  Bengaluru: { lat: 12.9716, lon: 77.5946 },
+  Mumbai: { lat: 19.076, lon: 72.8777 },
+  Delhi: { lat: 28.6139, lon: 77.209 },
+  Hyderabad: { lat: 17.385, lon: 78.4867 },
+};
 
 function formatRelativeTime(isoDate) {
   const diffMs = Date.now() - new Date(isoDate).getTime();
@@ -82,6 +82,47 @@ function getDeltaMeta(amount) {
     label: "No change",
     classes: "bg-coal-100 text-coal-700",
   };
+}
+
+function toDayKey(value) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+function getWeeklyTrend(history) {
+  const days = [];
+  const now = new Date();
+  for (let i = 6; i >= 0; i -= 1) {
+    const date = new Date(now);
+    date.setDate(now.getDate() - i);
+    const key = toDayKey(date);
+    days.push({
+      key,
+      label: date.toLocaleDateString(undefined, { weekday: "short" }),
+      triggers: 0,
+      paidAmount: 0,
+      blockedAmount: 0,
+      pendingClaims: 0,
+    });
+  }
+
+  history.forEach((item) => {
+    const key = toDayKey(item.createdAt || Date.now());
+    const day = days.find((entry) => entry.key === key);
+    if (!day) {
+      return;
+    }
+    day.triggers += 1;
+    if (item.status === "paid" || item.status === "capped") {
+      day.paidAmount += Number(item.payoutAmount || 0);
+    } else {
+      day.blockedAmount += Number(item.basePayout || 0);
+    }
+    if (item.lifecycleStatus === "pending-verification" || item.lifecycleStatus === "processing") {
+      day.pendingClaims += 1;
+    }
+  });
+
+  return days;
 }
 
 /*
@@ -161,89 +202,124 @@ function DashboardPage() {
   });
   const [latestTriggerId, setLatestTriggerId] = useState("");
   const [activePersonaKey, setActivePersonaKey] = useState("normal");
-  const [verificationState, setVerificationState] = useState({
-    status: "idle",
-    gesture: "",
-    gestureKey: "",
-    issuedAt: "",
-    verifiedAt: "",
-    evidence: null,
-  });
   const [lastActiveTime, setLastActiveTime] = useState(
     activityData.lastActiveTime,
+  );
+  const [triggerAuditEvents, setTriggerAuditEvents] = useState(() => getTriggerAuditEvents().slice(0, 8));
+  const [weeklyTrend, setWeeklyTrend] = useState(() => getWeeklyTrend(getPayoutHistory()));
+  const [simulationPlanId, setSimulationPlanId] = useState(selectedPlan.id);
+  const [simulationTriggerId, setSimulationTriggerId] = useState(triggerEvents[0]?.id || "");
+  const [showOnboarding, setShowOnboarding] = useState(
+    () => localStorage.getItem(onboardingStorageKey) !== "done",
   );
   const { languageMode, setLanguageMode } = useSiteLanguage();
   const hasAutoTriggeredRef = useRef(false);
 
   const activeFraudProfile = fraudScores[activePersonaKey] ?? fraudScores.normal;
   const activeRiskLevel = getRiskLevelFromScore(activeFraudProfile.score);
-  const verificationRequired = requiresVerification(activeRiskLevel);
 
   const latestTrigger =
     triggerEvents.find((event) => event.id === latestTriggerId) ?? null;
   const dailyPayoutCap = getDailyPayoutCap(selectedPlan.id);
 
-  const handleGenerateChallenge = () => {
-    const randomGesture = gestureOptions[Math.floor(Math.random() * gestureOptions.length)];
-    setVerificationState({
-      status: "pending",
-      gesture: randomGesture.label,
-      gestureKey: randomGesture.key,
-      issuedAt: new Date().toISOString(),
-      verifiedAt: "",
-      evidence: null,
-    });
+  const simulationPlan = planDetails.find((plan) => plan.id === simulationPlanId) || selectedPlan;
+  const simulationResult = simulationTriggerId
+    ? getPayoutForTrigger(triggerEvents, simulationTriggerId, simulationPlan.id, {
+        coverageHours: simulationPlan.coverageHours,
+        paidTodayAmount,
+        atTime: new Date(),
+      })
+    : null;
+
+  const planRecommendation = planDetails
+    .filter((plan) => plan.id !== selectedPlan.id)
+    .map((plan) => {
+      const comparisonPremium = calculateWeeklyPremium({
+        basePremium: plan.weeklyPremium,
+        platformCount: displayPlatforms.length,
+        riskLevel: session?.riskLevel || "Medium",
+      }).adjustedPremium;
+
+      return {
+        ...plan,
+        comparisonPremium,
+        premiumDelta: displayWeeklyPremium - comparisonPremium,
+        capDelta: getDailyPayoutCap(plan.id) - getDailyPayoutCap(selectedPlan.id),
+      };
+    })
+    .sort((a, b) => b.premiumDelta - a.premiumDelta)[0];
+
+  const closeOnboarding = () => {
+    localStorage.setItem(onboardingStorageKey, "done");
+    setShowOnboarding(false);
   };
 
-  const handleApproveVerification = (evidence) => {
-    setVerificationState((current) => ({
-      ...current,
-      status: "verified",
-      verifiedAt: new Date().toISOString(),
-      evidence: evidence ?? null,
-    }));
-  };
-
-  const handleResetVerification = () => {
-    setVerificationState({
-      status: "idle",
-      gesture: "",
-      gestureKey: "",
-      issuedAt: "",
-      verifiedAt: "",
-      evidence: null,
-    });
-  };
-
-  const handleSimulateTrigger = (triggerId) => {
+  const handleSimulateTrigger = async (triggerId) => {
     const now = new Date();
-    const verificationFresh =
-      verificationState.status === "verified" &&
-      verificationState.verifiedAt &&
-      now.getTime() - new Date(verificationState.verifiedAt).getTime() <= verificationWindowMs;
+    const triggerRules = evaluateTriggerRules({ triggerId, now });
 
-    if (verificationRequired && !verificationFresh) {
-      savePayoutReceipt({
+    if (triggerRules.cooldownBlocked || triggerRules.dedupBlocked) {
+      const blockedReason = triggerRules.cooldownBlocked
+        ? `Trigger cooling down. Retry in ${triggerRules.cooldownRemainingSec}s.`
+        : `Duplicate event blocked. Retry in ${triggerRules.dedupRemainingSec}s.`;
+
+      const status = triggerRules.cooldownBlocked ? "blocked-cooldown" : "blocked-dedup";
+      const blockedReceipt = createPayoutReceipt({
         createdAt: now.toISOString(),
-        status: "blocked-verification",
-        reason:
-          "Selfie gesture verification required for high-risk profile. Complete challenge to proceed.",
+        status,
+        reason: blockedReason,
         triggerId,
+        triggerLabel: triggerEvents.find((event) => event.id === triggerId)?.label ?? triggerId,
         planId: selectedPlan.id,
+        planName: selectedPlan.name,
         payoutAmount: 0,
+        basePayout: 0,
+        dailyCap: dailyPayoutCap,
+        remainingCap: Math.max(0, dailyPayoutCap - paidTodayAmount),
+        isCoveredNow: true,
+        coverageHours: selectedPlan.coverageHours,
+        riskLevel: activeRiskLevel,
+        failureReasonCode: "TRIGGER_BLOCKED",
       });
-      setLatestTriggerId(triggerId);
+      savePayoutReceipt(blockedReceipt);
+
+      const audit = {
+        id: blockedReceipt?.payoutId || `${now.getTime()}`,
+        createdAt: now.toISOString(),
+        triggerId,
+        decision: status,
+        reason: blockedReason,
+      };
+      appendTriggerAuditEvent(audit);
+      setTriggerAuditEvents(getTriggerAuditEvents().slice(0, 8));
+      setWeeklyTrend(getWeeklyTrend(getPayoutHistory()));
       setLastPayoutAmount(0);
       setLatestPayoutMeta({
-        status: "blocked-verification",
-        reason:
-          "Selfie gesture verification required for high-risk profile. Complete challenge to proceed.",
+        status,
+        reason: blockedReason,
         basePayout: 0,
         remainingCap: Math.max(0, dailyPayoutCap - paidTodayAmount),
-        dailyCap: dailyPayoutCap,
+        dailyCap,
+        triggerConfidenceScore: 0,
       });
+      setLatestTriggerId(triggerId);
+
+      pushNotification({
+        type: "warning",
+        title: "Trigger blocked",
+        message: blockedReason,
+      });
+      trackEvent("trigger_blocked", { triggerId, status, blockedReason });
       return;
     }
+
+    const cityCoord = cityCoordinates[displayCity] || cityCoordinates.Bengaluru;
+    const weatherReliability = await fetchWeatherReliability(cityCoord);
+    const triggerConfidence = getTriggerConfidenceScore({
+      triggerId,
+      weatherReliability,
+      personaRiskLevel: activeRiskLevel,
+    });
 
     const todayKey = now.toDateString();
     const effectivePaidToday = todayKey === payoutDayKey ? paidTodayAmount : 0;
@@ -264,8 +340,14 @@ function DashboardPage() {
       },
     );
     const payoutAmount = payoutResult.payoutAmount;
+    const enrichedResult = {
+      ...payoutResult,
+      triggerConfidenceScore: Number((triggerConfidence.score * 100).toFixed(0)),
+      triggerConfidenceLabel: triggerConfidence.label,
+      weatherReliability,
+    };
 
-    savePayoutReceipt({
+    const receipt = createPayoutReceipt({
       createdAt: now.toISOString(),
       status: payoutResult.status,
       reason: payoutResult.reason,
@@ -279,7 +361,25 @@ function DashboardPage() {
       remainingCap: payoutResult.remainingCap,
       isCoveredNow: payoutResult.isCoveredNow,
       coverageHours: payoutResult.coverageHours,
+      riskLevel: activeRiskLevel,
+      triggerConfidenceScore: enrichedResult.triggerConfidenceScore,
+      triggerConfidenceLabel: enrichedResult.triggerConfidenceLabel,
+      weatherReliability,
     });
+    savePayoutReceipt(receipt);
+
+    appendTriggerAuditEvent({
+      id: receipt?.payoutId || `${now.getTime()}`,
+      createdAt: now.toISOString(),
+      triggerId,
+      planId: selectedPlan.id,
+      decision: payoutResult.status,
+      reason: payoutResult.reason,
+      payoutAmount,
+      confidence: enrichedResult.triggerConfidenceScore,
+    });
+    setTriggerAuditEvents(getTriggerAuditEvents().slice(0, 8));
+    setWeeklyTrend(getWeeklyTrend(getPayoutHistory()));
 
     setLastPayoutAmount(payoutAmount);
     if (payoutAmount > 0) {
@@ -288,9 +388,21 @@ function DashboardPage() {
       );
     }
     setPaidTodayAmount(effectivePaidToday + payoutAmount);
-    setLatestPayoutMeta(payoutResult);
+    setLatestPayoutMeta(enrichedResult);
     setLatestTriggerId(triggerId);
     setLastActiveTime(now.toISOString());
+
+    pushNotification({
+      type: payoutAmount > 0 ? "success" : "warning",
+      title: payoutAmount > 0 ? "Payout approved" : "Payout blocked",
+      message: payoutResult.reason,
+    });
+    trackEvent("trigger_processed", {
+      triggerId,
+      payoutStatus: payoutResult.status,
+      payoutAmount,
+      confidence: enrichedResult.triggerConfidenceScore,
+    });
   };
 
   useEffect(() => {
@@ -360,6 +472,11 @@ function DashboardPage() {
               <Link to="/" className="secondary-btn">
                 {selectLabel(languageMode, "Back to Landing", "मुखपृष्ठ पर जाएं")}
               </Link>
+              {session?.role === "admin" ? (
+                <Link to="/admin/ops" className="secondary-btn">
+                  {selectLabel(languageMode, "Admin Ops", "एडमिन ऑप्स")}
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={() => {
@@ -460,8 +577,8 @@ function DashboardPage() {
               <p className="rounded-lg border border-coal-200 bg-white px-3 py-2 font-semibold">
                 {selectLabel(
                   languageMode,
-                  "2. If risk is high, do selfie gesture verification",
-                  "2. जोखिम अधिक हो तो सेल्फी जेस्चर सत्यापन करें",
+                  "2. Tap Receive Payout and complete selfie verification",
+                  "2. भुगतान प्राप्त करें दबाएं और सेल्फी सत्यापन पूरा करें",
                 )}
               </p>
               <p className="rounded-lg border border-coal-200 bg-white px-3 py-2 font-semibold">
@@ -516,15 +633,162 @@ function DashboardPage() {
       </section>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-2">
-        <SelfieVerificationPanel
-          requiresVerification={verificationRequired}
-          verificationState={verificationState}
-          onGenerateChallenge={handleGenerateChallenge}
-          onApproveVerification={handleApproveVerification}
-          onResetVerification={handleResetVerification}
-          languageMode={languageMode}
-        />
+        <article className="board-soft p-4">
+          <p className="kicker">{selectLabel(languageMode, "Why this payout amount", "यह भुगतान राशि क्यों")}</p>
+          <p className="mt-2 text-sm text-coal-700">
+            {selectLabel(
+              languageMode,
+              `Base ${formatCurrency(Number(latestPayoutMeta.basePayout || 0))} -> Remaining Cap ${formatCurrency(Number(latestPayoutMeta.remainingCap || 0))} -> Paid ${formatCurrency(lastPayoutAmount)} (${latestPayoutMeta.status || "idle"})`,
+              `बेस ${formatCurrency(Number(latestPayoutMeta.basePayout || 0))} -> बची सीमा ${formatCurrency(Number(latestPayoutMeta.remainingCap || 0))} -> भुगतान ${formatCurrency(lastPayoutAmount)} (${latestPayoutMeta.status || "idle"})`,
+            )}
+          </p>
+          <p className="mt-2 text-xs text-coal-600">
+            {selectLabel(languageMode, "Trigger confidence", "ट्रिगर भरोसा")}: {latestPayoutMeta.triggerConfidenceScore || 0}% ({latestPayoutMeta.triggerConfidenceLabel || "-"})
+          </p>
+        </article>
+
+        <article className="board-soft p-4">
+          <p className="kicker">{selectLabel(languageMode, "Plan recommendation", "योजना सुझाव")}</p>
+          {planRecommendation ? (
+            <>
+              <p className="mt-2 text-sm font-semibold text-coal-900">{planRecommendation.name}</p>
+              <p className="mt-1 text-xs text-coal-600">
+                {planRecommendation.premiumDelta > 0
+                  ? selectLabel(
+                    languageMode,
+                    `Switch plan to save ${formatCurrency(planRecommendation.premiumDelta)} per week`,
+                    `योजना बदलकर प्रति सप्ताह ${formatCurrency(planRecommendation.premiumDelta)} बचाएं`,
+                  )
+                  : selectLabel(
+                    languageMode,
+                    `Switch plan for +${formatCurrency(Math.abs(planRecommendation.capDelta))} daily cap potential`,
+                    `योजना बदलकर +${formatCurrency(Math.abs(planRecommendation.capDelta))} दैनिक सीमा पाएँ`,
+                  )}
+              </p>
+              <p className="mt-1 text-xs text-coal-600">
+                {selectLabel(languageMode, "Coverage", "कवरेज")}: {planRecommendation.coverageHours}
+              </p>
+            </>
+          ) : null}
+        </article>
       </section>
+
+      <section className="mt-4 grid gap-4 lg:grid-cols-2">
+        <article className="board-soft p-4">
+          <p className="kicker">{selectLabel(languageMode, "Weekly trend", "साप्ताहिक ट्रेंड")}</p>
+          <div className="mt-3 grid grid-cols-7 gap-2">
+            {weeklyTrend.map((day) => {
+              const barHeight = Math.min(100, day.triggers * 20 + day.pendingClaims * 10);
+              return (
+                <div key={day.key} className="flex flex-col items-center gap-1 text-[10px] text-coal-600">
+                  <div className="flex h-24 w-8 items-end rounded bg-coal-100">
+                    <div className="w-full rounded bg-electric-500" style={{ height: `${barHeight}%` }} />
+                  </div>
+                  <span>{day.label}</span>
+                  <span>{day.triggers}T</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-xs text-coal-600">
+            {selectLabel(languageMode, "Legend", "लीजेंड")}: T={selectLabel(languageMode, "Triggers", "ट्रिगर्स")}
+          </p>
+        </article>
+
+        <article className="board-soft p-4">
+          <p className="kicker">{selectLabel(languageMode, "Claim simulation", "क्लेम सिमुलेशन")}</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            <label className="text-xs font-semibold text-coal-600">
+              {selectLabel(languageMode, "Plan", "योजना")}
+              <select
+                className="mt-1 w-full rounded-lg border border-coal-200 bg-white px-2 py-2 text-sm"
+                value={simulationPlanId}
+                onChange={(event) => setSimulationPlanId(event.target.value)}
+              >
+                {planDetails.map((plan) => (
+                  <option key={plan.id} value={plan.id}>{plan.name}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="text-xs font-semibold text-coal-600">
+              {selectLabel(languageMode, "Trigger", "ट्रिगर")}
+              <select
+                className="mt-1 w-full rounded-lg border border-coal-200 bg-white px-2 py-2 text-sm"
+                value={simulationTriggerId}
+                onChange={(event) => setSimulationTriggerId(event.target.value)}
+              >
+                {triggerEvents.map((event) => (
+                  <option key={event.id} value={event.id}>{event.label}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {simulationResult ? (
+            <div className="mt-3 rounded-lg border border-coal-200 bg-white p-3 text-xs text-coal-700">
+              <p>{selectLabel(languageMode, "Predicted payout", "अनुमानित भुगतान")}: {formatCurrency(simulationResult.payoutAmount || 0)}</p>
+              <p>{selectLabel(languageMode, "Status", "स्थिति")}: {simulationResult.status}</p>
+              <p>{selectLabel(languageMode, "Reason", "कारण")}: {simulationResult.reason}</p>
+            </div>
+          ) : null}
+        </article>
+      </section>
+
+      <section className="mt-4">
+        <article className="board-soft p-4">
+          <p className="kicker">{selectLabel(languageMode, "Event audit timeline", "इवेंट ऑडिट टाइमलाइन")}</p>
+          <div className="mt-3 space-y-2">
+            {triggerAuditEvents.length === 0 ? (
+              <p className="text-xs text-coal-600">{selectLabel(languageMode, "No audits yet", "अभी कोई ऑडिट नहीं")}</p>
+            ) : (
+              triggerAuditEvents.map((event) => (
+                <div key={event.id} className="rounded-lg border border-coal-200 bg-white px-3 py-2 text-xs text-coal-700">
+                  <p className="font-semibold text-coal-900">{event.triggerId}{" -> "}{event.decision}</p>
+                  <p>{new Date(event.createdAt).toLocaleString()}</p>
+                  <p>{event.reason}</p>
+                  {event.confidence ? <p>Confidence: {event.confidence}%</p> : null}
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+      </section>
+
+      <nav className="fixed bottom-3 left-1/2 z-40 flex w-[95%] max-w-md -translate-x-1/2 items-center justify-between rounded-full border border-coal-200 bg-white/95 px-3 py-2 shadow-edge lg:hidden">
+        <button type="button" className="text-xs font-semibold text-coal-700" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+          {selectLabel(languageMode, "Trigger", "ट्रिगर")}
+        </button>
+        <Link to="/payout" className="text-xs font-semibold text-coal-700">
+          {selectLabel(languageMode, "Verify", "वेरिफाई")}
+        </Link>
+        <Link to="/payout" className="text-xs font-semibold text-coal-700">
+          {selectLabel(languageMode, "Receive", "प्राप्त")}
+        </Link>
+        <Link to="/payout/history" className="text-xs font-semibold text-coal-700">
+          {selectLabel(languageMode, "History", "इतिहास")}
+        </Link>
+      </nav>
+
+      {showOnboarding ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-coal-900/40 px-4">
+          <article className="w-full max-w-lg rounded-2xl border border-coal-200 bg-white p-5 shadow-edge">
+            <p className="kicker">{selectLabel(languageMode, "How payout works", "भुगतान कैसे काम करता है")}</p>
+            <ol className="mt-3 list-decimal space-y-2 pl-5 text-sm text-coal-700">
+              <li>{selectLabel(languageMode, "Trigger event is detected", "ट्रिगर इवेंट पहचाना जाता है")}</li>
+              <li>{selectLabel(languageMode, "Risk and confidence checks run", "जोखिम और भरोसा जांच चलती है")}</li>
+              <li>{selectLabel(languageMode, "Verification may be required", "सत्यापन आवश्यक हो सकता है")}</li>
+              <li>{selectLabel(languageMode, "Payout settles and receipt is stored", "भुगतान सेटल होता है और रसीद सुरक्षित होती है")}</li>
+            </ol>
+            <div className="mt-4 flex justify-end">
+              <button type="button" className="primary-btn" onClick={closeOnboarding}>
+                {selectLabel(languageMode, "Start demo", "डेमो शुरू करें")}
+              </button>
+            </div>
+          </article>
+        </div>
+      ) : null}
+
     </main>
   );
 }

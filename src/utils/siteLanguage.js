@@ -5,7 +5,11 @@ const siteLanguageStorageKey = "gigshieldLanguageMode";
 
 export function getStoredLanguageMode() {
   const stored = localStorage.getItem(siteLanguageStorageKey);
-  if (stored === languageModes.ENGLISH || stored === languageModes.HINDI) {
+  if (
+    stored === languageModes.ENGLISH ||
+    stored === languageModes.HINDI ||
+    stored === languageModes.HINGLISH
+  ) {
     return stored;
   }
   return languageModes.ENGLISH;

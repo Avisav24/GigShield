@@ -25,6 +25,17 @@ function LanguageToggle({ languageMode, setLanguageMode }) {
       >
         {selectLabel(languageMode, "Hindi", "हिंदी")}
       </button>
+      <button
+        type="button"
+        onClick={() => setLanguageMode(languageModes.HINGLISH)}
+        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+          languageMode === languageModes.HINGLISH
+            ? "bg-coal-900 text-white"
+            : "text-coal-700"
+        }`}
+      >
+        {selectLabel(languageMode, "Hinglish", "हिंग्लिश", "Hinglish")}
+      </button>
     </div>
   );
 }

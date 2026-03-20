@@ -7,7 +7,11 @@ import ProductPage from "./pages/ProductPage";
 import TriggerPage from "./pages/TriggerPage";
 import FraudGuardPage from "./pages/FraudGuardPage";
 import PayoutPage from "./pages/PayoutPage";
-import { isSessionActive } from "./utils/session";
+import PayoutReceivedPage from "./pages/PayoutReceivedPage";
+import PayoutHistoryPage from "./pages/PayoutHistoryPage";
+import AdminOperationsPage from "./pages/AdminOperationsPage";
+import NotificationStack from "./components/NotificationStack";
+import { hasRole, isSessionActive } from "./utils/session";
 
 function ProtectedRoute({ children }) {
   if (!isSessionActive()) {
@@ -16,9 +20,22 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
+function AdminRoute({ children }) {
+  if (!isSessionActive()) {
+    return <Navigate replace to="/auth" />;
+  }
+
+  if (!hasRole("admin")) {
+    return <Navigate replace to="/dashboard" />;
+  }
+
+  return children;
+}
+
 function App() {
   return (
     <BrowserRouter>
+      <NotificationStack />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<AuthPage />} />
@@ -40,6 +57,30 @@ function App() {
             <ProtectedRoute>
               <PayoutPage />
             </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/payout/received"
+          element={(
+            <ProtectedRoute>
+              <PayoutReceivedPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/payout/history"
+          element={(
+            <ProtectedRoute>
+              <PayoutHistoryPage />
+            </ProtectedRoute>
+          )}
+        />
+        <Route
+          path="/admin/ops"
+          element={(
+            <AdminRoute>
+              <AdminOperationsPage />
+            </AdminRoute>
           )}
         />
         <Route path="*" element={<Navigate replace to="/" />} />

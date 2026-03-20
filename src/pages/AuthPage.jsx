@@ -179,6 +179,8 @@ function AuthPage() {
       saveSession({
         isAuthenticated: true,
         mode,
+        role: authUser?.email?.includes("admin") ? "admin" : "worker",
+        authToken: authUser?.id || "",
         name: userMeta.full_name || fullNameValue || userProfile.name,
         email: authUser?.email || emailValue,
         city: userMeta.city || cityValue || userProfile.city,

@@ -25,6 +25,8 @@ function TriggerSimulationPanel({
     "blocked-cap": "border-red-300 bg-red-50 text-red-800",
     "blocked-coverage": "border-red-300 bg-red-50 text-red-800",
     "blocked-verification": "border-red-300 bg-red-50 text-red-800",
+    "blocked-cooldown": "border-red-300 bg-red-50 text-red-800",
+    "blocked-dedup": "border-red-300 bg-red-50 text-red-800",
     "invalid-trigger": "border-red-300 bg-red-50 text-red-800",
   };
 
@@ -105,7 +107,9 @@ function TriggerSimulationPanel({
           ) : null}
           {latestPayoutMeta.status === "blocked-cap" ||
           latestPayoutMeta.status === "blocked-coverage" ||
-          latestPayoutMeta.status === "blocked-verification" ? (
+          latestPayoutMeta.status === "blocked-verification" ||
+          latestPayoutMeta.status === "blocked-cooldown" ||
+          latestPayoutMeta.status === "blocked-dedup" ? (
             <p className="mt-1">{latestPayoutMeta.reason}</p>
           ) : null}
           <p className="mt-1 text-xs text-coal-700">
@@ -114,6 +118,11 @@ function TriggerSimulationPanel({
             {selectLabel(languageMode, "Remaining cap before event", "इवेंट से पहले बची सीमा")}: {" "}
             {formatCurrency(latestPayoutMeta.remainingCap)}
           </p>
+          {latestPayoutMeta.triggerConfidenceScore ? (
+            <p className="mt-1 text-xs text-coal-700">
+              {selectLabel(languageMode, "Confidence", "विश्वास")}: {latestPayoutMeta.triggerConfidenceScore}% ({latestPayoutMeta.triggerConfidenceLabel})
+            </p>
+          ) : null}
 
           {latestPayoutMeta.status === "paid" || latestPayoutMeta.status === "capped" ? (
             <div className="mt-3 flex flex-wrap gap-2">

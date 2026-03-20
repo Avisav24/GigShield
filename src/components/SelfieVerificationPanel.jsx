@@ -51,6 +51,14 @@ function SelfieVerificationPanel({
   const handLandmarkerRef = useRef(null);
   const handLandmarkerInitRef = useRef(null);
   const [handDetectorError, setHandDetectorError] = useState("");
+  const livenessPromptPool = [
+    { key: "blink_twice", label: "Blink twice" },
+    { key: "turn_left", label: "Turn head left" },
+    { key: "turn_right", label: "Turn head right" },
+    { key: "look_up", label: "Look up" },
+  ];
+  const [livenessSequence, setLivenessSequence] = useState([]);
+  const [livenessCompleted, setLivenessCompleted] = useState([]);
 
   const recentGesturesRef = useRef([]);
   const recentMaxFrames = 15;
@@ -95,6 +103,8 @@ function SelfieVerificationPanel({
       setHandHoldSatisfied(false);
       setDetectedGesture("");
       setHandDetectorError("");
+      setLivenessSequence([]);
+      setLivenessCompleted([]);
       handHoldStartRef.current = 0;
 
       recentGesturesRef.current = [];
@@ -113,6 +123,22 @@ function SelfieVerificationPanel({
       };
     }
   }, [verificationState.status]);
+
+  useEffect(() => {
+    if (verificationState.status !== "pending") {
+      return;
+    }
+
+    if (livenessSequence.length > 0) {
+      return;
+    }
+
+    const shuffled = [...livenessPromptPool].sort(() => Math.random() - 0.5);
+    const nextSequence = shuffled.slice(0, 3);
+    setLivenessSequence(nextSequence);
+    setLivenessCompleted([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [verificationState.status, livenessSequence.length]);
 
   const isFingerExtended = (landmarks, tipIndex, pipIndex) => {
     const tip = landmarks[tipIndex];
@@ -578,6 +604,15 @@ function SelfieVerificationPanel({
       return;
     }
 
+    const livenessPassed =
+      livenessSequence.length > 0 &&
+      livenessSequence.every((item) => livenessCompleted.includes(item.key));
+
+    if (!livenessPassed) {
+      setVerificationError("Complete all liveness checks before approval.");
+      return;
+    }
+
     setVerifying(true);
 
     const locationResult = await getCurrentLocation();
@@ -600,6 +635,11 @@ function SelfieVerificationPanel({
       locationError: locationResult.ok ? "" : locationResult.error,
       weather: weatherResult.weather,
       weatherError: weatherResult.ok ? "" : weatherResult.error,
+      liveness: {
+        sequence: livenessSequence,
+        completed: livenessCompleted,
+        passed: livenessPassed,
+      },
       verifiedClientAt: new Date().toISOString(),
     };
 
@@ -611,6 +651,9 @@ function SelfieVerificationPanel({
   const isVerified = verificationState.status === "verified";
   const isPending = verificationState.status === "pending";
   const handHoldSeconds = Math.ceil((requiredHandHoldMs - handHoldMs) / 1000);
+  const livenessDoneCount = livenessSequence.filter((item) =>
+    livenessCompleted.includes(item.key),
+  ).length;
 
   return (
     <Card
@@ -673,6 +716,50 @@ function SelfieVerificationPanel({
               {selectLabel(languageMode, "Clear", "साफ करें")}
             </button>
           </div>
+        </div>
+
+        <div className="board-soft p-3">
+          <p className="kicker">{selectLabel(languageMode, "Liveness Checks", "लाइवनेस जांच")}</p>
+          <p className="mt-2 text-xs text-coal-600">
+            {selectLabel(
+              languageMode,
+              "Complete random prompts: blink and head movements.",
+              "रैंडम संकेत पूरे करें: पलक झपकाना और सिर घुमाना।",
+            )}
+          </p>
+
+          <div className="mt-2 space-y-2">
+            {livenessSequence.map((item) => {
+              const completed = livenessCompleted.includes(item.key);
+              return (
+                <div
+                  key={item.key}
+                  className="flex items-center justify-between rounded-lg border border-coal-200 bg-white px-3 py-2"
+                >
+                  <p className="text-xs font-semibold text-coal-800">{item.label}</p>
+                  <button
+                    type="button"
+                    className={completed ? "secondary-btn" : "primary-btn"}
+                    onClick={() => {
+                      setLivenessCompleted((current) =>
+                        current.includes(item.key)
+                          ? current.filter((entry) => entry !== item.key)
+                          : [...current, item.key],
+                      );
+                    }}
+                  >
+                    {completed
+                      ? selectLabel(languageMode, "Done", "पूर्ण")
+                      : selectLabel(languageMode, "Mark done", "पूरा करें")}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+
+          <p className="mt-2 text-xs font-semibold text-coal-600">
+            {selectLabel(languageMode, "Progress", "प्रगति")}: {livenessDoneCount}/{livenessSequence.length || 0}
+          </p>
         </div>
 
         <div className="board-soft p-3">
@@ -758,6 +845,9 @@ function SelfieVerificationPanel({
                   <p>
                     Weather: {evidence.weather?.tempC != null ? `${evidence.weather.tempC}°C` : "N/A"},{" "}
                     {evidence.weather?.windKmph != null ? `${evidence.weather.windKmph} km/h wind` : "N/A"}
+                  </p>
+                  <p>
+                    Liveness: {evidence.liveness?.passed ? "Passed" : "Failed"}
                   </p>
                 </div>
               ) : null}

@@ -37,7 +37,10 @@ function LandingPage() {
 
           <nav className="hidden items-center gap-5 text-sm font-medium text-coal-500 lg:flex">
             {navItems.map((item) =>
-              item.key === "pricing" || item.key === "product" || item.key === "triggers" || item.key === "fraud" ? (
+              item.key === "pricing" ||
+              item.key === "product" ||
+              item.key === "triggers" ||
+              item.key === "fraud" ? (
                 <button
                   key={item.key}
                   type="button"
@@ -93,51 +96,6 @@ function LandingPage() {
               "GigShield Zomato और Swiggy जैसे प्लेटफॉर्म पर काम करने वाले डिलीवरी वर्कर्स की सुरक्षा करता है और पर्यावरण/प्लेटफॉर्म इवेंट पर स्वतः भुगतान देता है।",
             )}
           </p>
-
-          <div className="mt-7 flex flex-wrap items-center gap-3">
-            <button
-              type="button"
-              onClick={() => navigate("/auth")}
-              className="primary-btn"
-            >
-              {selectLabel(languageMode, "Get Protected", "सुरक्षा शुरू करें")}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/pricing")}
-              className="secondary-btn"
-            >
-              {selectLabel(languageMode, "View Pricing", "कीमत देखें")}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/product")}
-              className="secondary-btn"
-            >
-              {selectLabel(languageMode, "Explore Product", "उत्पाद देखें")}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/triggers")}
-              className="secondary-btn"
-            >
-              {selectLabel(languageMode, "Explore Triggers", "ट्रिगर्स देखें")}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/fraud-guard")}
-              className="secondary-btn"
-            >
-              {selectLabel(languageMode, "Explore Fraud Guard", "फ्रॉड गार्ड देखें")}
-            </button>
-            <button
-              type="button"
-              onClick={() => navigate("/dashboard")}
-              className="secondary-btn"
-            >
-              {selectLabel(languageMode, "See Live Dashboard", "लाइव डैशबोर्ड देखें")}
-            </button>
-          </div>
 
           <div className="mt-9 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
             <article className="board-soft p-4">
