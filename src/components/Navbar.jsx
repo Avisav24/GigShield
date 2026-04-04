@@ -1,20 +1,7 @@
 import { useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Marquee from "react-fast-marquee";
-import {
-  Zap,
-  Menu,
-  X,
-  ArrowUp,
-  CloudRain,
-  Wind,
-  WifiOff,
-  MapPinOff,
-  Activity,
-  ScanFace,
-  Lock,
-  CheckCircle2,
-} from "lucide-react";
+import { Zap } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
 import { selectLabel } from "../utils/i18n";
 import { useSiteLanguage } from "../utils/siteLanguage";
@@ -79,9 +66,9 @@ export default function Navbar() {
       </div>
 
       {/* Navigation Bar */}
-      <nav className="glass-nav mx-auto mt-2 flex w-[min(96%,80rem)] items-center justify-between px-6 py-3.5 md:px-8 flex-none transition-all duration-300">
+      <nav className="glass-nav mx-auto mt-2 flex w-[min(96%,80rem)] items-center justify-between px-3 py-2.5 sm:px-6 sm:py-3.5 md:px-8 flex-none transition-all duration-300">
         <div
-          className="cursor-pointer rounded bg-[#f4f5f7]/90 px-3 py-1 text-xl md:text-2xl font-bold tracking-tight text-gray-900 backdrop-blur-sm shadow-sm border border-white/60"
+          className="cursor-pointer rounded bg-[#f4f5f7]/90 px-2.5 py-1 text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-gray-900 backdrop-blur-sm shadow-sm border border-white/60"
           onClick={() => navigate("/")}
         >
           GIGSHIELD.
@@ -130,6 +117,36 @@ export default function Navbar() {
           </button>
         </div>
       </nav>
+
+      <div className="mt-2 px-2 sm:px-4 lg:hidden">
+        <div className="glass-nav mx-auto flex w-full items-center justify-between gap-2 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleNavClick("product")}
+              className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-gray-800"
+            >
+              {selectLabel(languageMode, "Product", "उत्पाद")}
+            </button>
+            <button
+              onClick={() => handleNavClick("pricing")}
+              className="rounded-full bg-white/70 px-3 py-1.5 text-xs font-semibold text-gray-800"
+            >
+              {selectLabel(languageMode, "Pricing", "कीमत")}
+            </button>
+          </div>
+          <LanguageToggle
+            languageMode={languageMode}
+            setLanguageMode={setLanguageMode}
+          />
+        </div>
+        <button
+          type="button"
+          onClick={() => navigate("/signin")}
+          className="mt-2 w-full rounded-full bg-[#202A36] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
+        >
+          {selectLabel(languageMode, "Sign in with Google", "Google से साइन इन")}
+        </button>
+      </div>
     </div>
   );
 }

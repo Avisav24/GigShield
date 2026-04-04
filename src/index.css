@@ -34,7 +34,7 @@ body {
 
 @layer components {
   .frame-shell {
-    @apply mx-auto w-full max-w-[1400px] px-6 sm:px-8;
+    @apply mx-auto w-full max-w-[1400px] px-4 sm:px-8;
   }
 
   .glass-card {
@@ -79,11 +79,11 @@ body {
   }
 
   .primary-btn {
-    @apply inline-flex items-center justify-center rounded-full bg-[#1a2229] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800;
+    @apply inline-flex items-center justify-center rounded-full bg-[#1a2229] px-4 sm:px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800;
   }
 
   .secondary-btn {
-    @apply inline-flex items-center justify-center rounded-full border border-gray-200 bg-white/80 px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-white backdrop-blur-sm;
+    @apply inline-flex items-center justify-center rounded-full border border-gray-200 bg-white/80 px-4 sm:px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-white backdrop-blur-sm;
   }
 
   .animate-enter {

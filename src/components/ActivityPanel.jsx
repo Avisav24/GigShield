@@ -7,8 +7,9 @@ import { selectLabel } from "../utils/i18n";
  * The panel is static mock data but keeps the demo tied to rider activity context.
  */
 function ActivityPanel({ activity, lastActiveTime, languageMode }) {
+  const isWorkingNow = activity.movementStatus === "Active";
   const movementClasses =
-    activity.movementStatus === "Active"
+    isWorkingNow
       ? "bg-green-100 text-green-600 border-green-200"
       : "bg-gray-100 text-gray-500 border-gray-200";
 
@@ -17,16 +18,16 @@ function ActivityPanel({ activity, lastActiveTime, languageMode }) {
       icon="activity"
       languageMode={languageMode}
       title={
-        selectLabel(languageMode, "Work Activity", "काम की गतिविधि")
+        selectLabel(languageMode, "Work Summary", "काम का सार")
       }
       subtitle={
-        selectLabel(languageMode, "Daily summary", "रोज़ का काम")
+        selectLabel(languageMode, "Simple daily work status", "आज के काम की सरल स्थिति")
       }
     >
       <dl className="space-y-4">
         {[
-          { label: selectLabel(languageMode, "Orders done today", "आज के ऑर्डर"), value: activity.ordersCompletedToday },
-          { label: selectLabel(languageMode, "Last active", "आखिरी सक्रिय"), value: formatTime(lastActiveTime) }
+          { label: selectLabel(languageMode, "Orders Completed Today", "आज पूरे किए गए ऑर्डर"), value: activity.ordersCompletedToday },
+          { label: selectLabel(languageMode, "Last Seen Working", "अंतिम बार काम करते हुए"), value: formatTime(lastActiveTime) }
         ].map((item, i) => (
           <div key={i} className="flex items-center justify-between border-b border-gray-100 pb-3 last:border-0 last:pb-0">
             <dt className="text-xs font-bold uppercase tracking-widest text-gray-400">
@@ -40,13 +41,15 @@ function ActivityPanel({ activity, lastActiveTime, languageMode }) {
 
         <div className="flex items-center justify-between border-t border-gray-100 pt-4">
           <dt className="text-xs font-bold uppercase tracking-widest text-gray-400">
-            {selectLabel(languageMode, "Current movement", "अभी की गतिविधि")}
+            {selectLabel(languageMode, "Working Right Now", "अभी काम कर रहे हैं")}
           </dt>
           <dd>
             <span
               className={`inline-flex rounded-full border px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter ${movementClasses}`}
             >
-              {activity.movementStatus}
+              {isWorkingNow
+                ? selectLabel(languageMode, "Yes", "हाँ")
+                : selectLabel(languageMode, "No", "नहीं")}
             </span>
           </dd>
         </div>

@@ -16,7 +16,7 @@ export function validateCoverageDomain(domain) {
     return {
       ok: false,
       reasonCode: "POLICY_DOMAIN_MISSING",
-      reason: "Trigger domain is not specified.",
+      reason: "Emergency details are incomplete, so support cannot start yet.",
     };
   }
 
@@ -24,7 +24,7 @@ export function validateCoverageDomain(domain) {
     return {
       ok: false,
       reasonCode: "POLICY_EXCLUSION",
-      reason: `Coverage is excluded for ${domain} events.`,
+      reason: `This type of emergency (${domain}) is not included in your support plan.`,
     };
   }
 
@@ -32,7 +32,7 @@ export function validateCoverageDomain(domain) {
     return {
       ok: false,
       reasonCode: "POLICY_DOMAIN_UNSUPPORTED",
-      reason: `Coverage domain ${domain} is unsupported.`,
+      reason: `This emergency category (${domain}) is not supported right now.`,
     };
   }
 

@@ -51,32 +51,9 @@ function SelfieVerificationPanel({
   const handLandmarkerRef = useRef(null);
   const handLandmarkerInitRef = useRef(null);
   const [handDetectorError, setHandDetectorError] = useState("");
-  const livenessPromptPool = [
-    { key: "blink_twice", label: "Blink twice" },
-    { key: "turn_left", label: "Turn head left" },
-    { key: "turn_right", label: "Turn head right" },
-    { key: "look_up", label: "Look up" },
-  ];
-  const [livenessSequence, setLivenessSequence] = useState([]);
-  const [livenessCompleted, setLivenessCompleted] = useState([]);
 
   const recentGesturesRef = useRef([]);
   const recentMaxFrames = 15;
-
-  const waveStateRef = useRef({
-    centerXHistory: [],
-    direction: 0,
-    flips: 0,
-    lastCenterX: null,
-    satisfied: false,
-  });
-
-  const scaleMotionRef = useRef({
-    scaleHistory: [],
-    satisfiedCloser: false,
-    satisfiedFarther: false,
-    lastScale: null,
-  });
 
   useEffect(() => {
     handHoldSatisfiedRef.current = handHoldSatisfied;
@@ -87,7 +64,6 @@ function SelfieVerificationPanel({
       if (streamRef) {
         streamRef.getTracks().forEach((track) => track.stop());
       }
-
       if (detectionRafRef.current) {
         cancelAnimationFrame(detectionRafRef.current);
       }
@@ -103,42 +79,10 @@ function SelfieVerificationPanel({
       setHandHoldSatisfied(false);
       setDetectedGesture("");
       setHandDetectorError("");
-      setLivenessSequence([]);
-      setLivenessCompleted([]);
       handHoldStartRef.current = 0;
-
       recentGesturesRef.current = [];
-      waveStateRef.current = {
-        centerXHistory: [],
-        direction: 0,
-        flips: 0,
-        lastCenterX: null,
-        satisfied: false,
-      };
-      scaleMotionRef.current = {
-        scaleHistory: [],
-        satisfiedCloser: false,
-        satisfiedFarther: false,
-        lastScale: null,
-      };
     }
   }, [verificationState.status]);
-
-  useEffect(() => {
-    if (verificationState.status !== "pending") {
-      return;
-    }
-
-    if (livenessSequence.length > 0) {
-      return;
-    }
-
-    const shuffled = [...livenessPromptPool].sort(() => Math.random() - 0.5);
-    const nextSequence = shuffled.slice(0, 3);
-    setLivenessSequence(nextSequence);
-    setLivenessCompleted([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [verificationState.status, livenessSequence.length]);
 
   const isFingerExtended = (landmarks, tipIndex, pipIndex) => {
     const tip = landmarks[tipIndex];
@@ -146,8 +90,6 @@ function SelfieVerificationPanel({
     if (!tip || !pip) {
       return false;
     }
-
-    // y axis grows downwards; extended finger tips are generally "higher" (smaller y).
     return tip.y < pip.y - 0.02;
   };
 
@@ -162,135 +104,33 @@ function SelfieVerificationPanel({
   };
 
   const majorityMatch = (items, expectedKey) => {
-    if (!expectedKey) {
-      return false;
-    }
-    if (!items.length) {
+    if (!expectedKey || !items.length) {
       return false;
     }
     const hits = items.filter((item) => item === expectedKey).length;
     return hits / items.length >= 0.75;
   };
 
-  const getPalmScale = (landmarks) => {
-    const wrist = landmarks?.[0];
-    const middleMcp = landmarks?.[9];
-    return Math.max(0.0001, distance(wrist, middleMcp));
-  };
-
-  const getHandCenterX = (landmarks) => {
-    if (!Array.isArray(landmarks) || landmarks.length === 0) {
-      return null;
-    }
-    let sum = 0;
-    for (const lm of landmarks) {
-      sum += lm.x;
-    }
-    return sum / landmarks.length;
-  };
-
-  const updateWaveState = (centerX, palmScale) => {
-    const state = waveStateRef.current;
-    if (centerX == null) {
-      return state;
-    }
-
-    state.centerXHistory.push(centerX);
-    if (state.centerXHistory.length > 40) {
-      state.centerXHistory.shift();
-    }
-
-    const last = state.lastCenterX;
-    state.lastCenterX = centerX;
-
-    if (last == null) {
-      return state;
-    }
-
-    const dx = centerX - last;
-    const threshold = 0.08 * (palmScale > 0 ? 1 : 1);
-
-    if (Math.abs(dx) < threshold) {
-      return state;
-    }
-
-    const direction = dx > 0 ? 1 : -1;
-    if (state.direction === 0) {
-      state.direction = direction;
-      return state;
-    }
-
-    if (direction !== state.direction) {
-      state.flips += 1;
-      state.direction = direction;
-      if (state.flips >= 4) {
-        state.satisfied = true;
-      }
-    }
-
-    return state;
-  };
-
-  const updateScaleMotionState = (palmScale) => {
-    const state = scaleMotionRef.current;
-    if (!palmScale) {
-      return state;
-    }
-
-    state.scaleHistory.push(palmScale);
-    if (state.scaleHistory.length > 40) {
-      state.scaleHistory.shift();
-    }
-
-    const first = state.scaleHistory[0];
-    const last = state.scaleHistory[state.scaleHistory.length - 1];
-    const delta = last - first;
-    const threshold = 0.18 * first;
-
-    if (delta > threshold) {
-      state.satisfiedCloser = true;
-    }
-    if (delta < -threshold) {
-      state.satisfiedFarther = true;
-    }
-
-    return state;
-  };
-
   const classifyGestureFromLandmarks = (landmarks) => {
-    // Landmarks are normalized [0..1] in image space.
     const indexExtended = isFingerExtended(landmarks, 8, 6);
     const middleExtended = isFingerExtended(landmarks, 12, 10);
     const ringExtended = isFingerExtended(landmarks, 16, 14);
     const pinkyExtended = isFingerExtended(landmarks, 20, 18);
 
-    // Thumb: use a looser heuristic since x-direction depends on handedness.
     const thumbTip = landmarks[4];
     const thumbMcp = landmarks[2];
     const wrist = landmarks[0];
     const middleMcp = landmarks[9];
     const scale = Math.max(0.0001, distance(wrist, middleMcp));
     const thumbExtended = distance(thumbTip, wrist) > distance(thumbMcp, wrist) + 0.12 * scale;
-
     const thumbUp = thumbTip?.y < thumbMcp?.y - 0.05;
 
-    // OK sign: thumb tip and index tip close.
     const okDistance = distance(thumbTip, landmarks[8]);
     const isOk = okDistance > 0 && okDistance < 0.22 * scale;
-
-    const extendedCount = [
-      thumbExtended,
-      indexExtended,
-      middleExtended,
-      ringExtended,
-      pinkyExtended,
-    ].filter(Boolean).length;
 
     const openPalmLike = indexExtended && middleExtended && ringExtended && pinkyExtended;
     const fistLike = !indexExtended && !middleExtended && !ringExtended && !pinkyExtended;
 
-    // Confidence scores (0..1) based on how strongly we fit a pattern.
-    // These are deliberately simple and conservative.
     const confidence = {
       open_palm: openPalmLike ? (thumbExtended ? 1 : 0.85) : 0,
       fist: fistLike ? 1 : 0,
@@ -301,6 +141,10 @@ function SelfieVerificationPanel({
       ok: isOk && middleExtended && ringExtended && pinkyExtended ? 1 : isOk ? 0.8 : 0,
       three: indexExtended && middleExtended && ringExtended && !pinkyExtended ? 0.9 : 0,
       four: indexExtended && middleExtended && ringExtended && pinkyExtended && !thumbExtended ? 0.9 : 0,
+      both_hands: 0,
+      wave: 0,
+      move_closer: 0,
+      move_farther: 0,
     };
 
     const best = Object.entries(confidence)
@@ -322,13 +166,6 @@ function SelfieVerificationPanel({
       return { key, label: labelMap[key] ?? "Unknown", score };
     }
 
-    // Fallbacks for ambiguous hands.
-    if (extendedCount >= 4) {
-      return { key: "open_palm", label: "Open palm", score: 0.6 };
-    }
-    if (extendedCount === 0) {
-      return { key: "fist", label: "Fist", score: 0.6 };
-    }
     return { key: "unknown", label: "Unknown", score: 0 };
   };
 
@@ -374,18 +211,11 @@ function SelfieVerificationPanel({
 
     if (!handLandmarkerInitRef.current) {
       handLandmarkerInitRef.current = (async () => {
-        const { FilesetResolver, HandLandmarker } = await import(
-          "@mediapipe/tasks-vision"
-        );
-
-        const vision = await FilesetResolver.forVisionTasks(
-          "/mediapipe/wasm"
-        );
-
+        const { FilesetResolver, HandLandmarker } = await import("@mediapipe/tasks-vision");
+        const vision = await FilesetResolver.forVisionTasks("/mediapipe/wasm");
         const handLandmarker = await HandLandmarker.createFromOptions(vision, {
           baseOptions: {
-            modelAssetPath:
-              "/mediapipe/models/hand_landmarker.task",
+            modelAssetPath: "/mediapipe/models/hand_landmarker.task",
           },
           runningMode: "VIDEO",
           numHands: 2,
@@ -403,9 +233,7 @@ function SelfieVerificationPanel({
     try {
       setCameraError("");
       setVerificationError("");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user" },
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
       setStreamRef(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -470,67 +298,32 @@ function SelfieVerificationPanel({
         let matchFound = false;
         let detectedLabel = "";
 
-        // Special: if we somehow have no gestureKey (older state), treat it as "any hand".
-        const anyHandMode = !expectedKey;
+        for (let i = 0; i < handsCount; i += 1) {
+          const landmarks = result.landmarks[i];
+          if (!landmarks) {
+            continue;
+          }
 
-        if (handsCount > 0) {
-          if (expectedKey === "both_hands") {
-            matchFound = handsCount >= 2;
-            detectedLabel = handsCount >= 2 ? "Both hands" : "One hand";
-          } else if (expectedKey === "wave") {
-            const primary = result.landmarks[0];
-            const centerX = getHandCenterX(primary);
-            const palmScale = getPalmScale(primary);
-            updateWaveState(centerX, palmScale);
-            matchFound = waveStateRef.current.satisfied;
-            detectedLabel = waveStateRef.current.satisfied ? "Wave" : "Waving...";
-          } else if (expectedKey === "move_closer" || expectedKey === "move_farther") {
-            const primary = result.landmarks[0];
-            const palmScale = getPalmScale(primary);
-            updateScaleMotionState(palmScale);
-            matchFound =
-              expectedKey === "move_closer"
-                ? scaleMotionRef.current.satisfiedCloser
-                : scaleMotionRef.current.satisfiedFarther;
-            detectedLabel = expectedKey === "move_closer" ? "Moving closer..." : "Moving farther...";
-          } else {
-            for (let i = 0; i < handsCount; i += 1) {
-              const landmarks = result.landmarks[i];
-              if (!landmarks) {
-                continue;
-              }
+          const classified = classifyGestureFromLandmarks(landmarks);
+          const handedness = getHandednessLabel(result, i);
+          const labelSuffix = handedness ? ` (${handedness})` : "";
+          const strongEnough = (classified.score ?? 0) >= 0.8;
+          detectedLabel = `${classified.label}${labelSuffix}`;
 
-              const classified = classifyGestureFromLandmarks(landmarks);
-              const handedness = getHandednessLabel(result, i);
-              const labelSuffix = handedness ? ` (${handedness})` : "";
-
-              // Only accept strong-enough classifications.
-              const strongEnough = (classified.score ?? 0) >= 0.8;
-              detectedLabel = `${classified.label}${labelSuffix}`;
-
-              if (anyHandMode) {
-                matchFound = true;
-                break;
-              }
-
-              if (strongEnough && classified.key === expectedKey) {
-                matchFound = true;
-                break;
-              }
-            }
+          if (strongEnough && classified.key === expectedKey) {
+            matchFound = true;
+            break;
           }
         }
 
         setDetectedGesture(detectedLabel);
 
-        // Temporal smoothing: keep a short history of what we matched (or empty).
-        if (!anyHandMode && expectedKey && expectedKey !== "both_hands" && expectedKey !== "wave" && expectedKey !== "move_closer" && expectedKey !== "move_farther") {
+        if (expectedKey) {
           const history = recentGesturesRef.current;
           history.push(matchFound ? expectedKey : "");
           if (history.length > recentMaxFrames) {
             history.shift();
           }
-          // Require stable majority before we start the timer.
           matchFound = majorityMatch(history, expectedKey);
         }
 
@@ -590,7 +383,7 @@ function SelfieVerificationPanel({
     setVerificationError("");
 
     if (verificationState.status !== "pending") {
-      setVerificationError("Tap new gesture to start verification.");
+      setVerificationError("Start gesture check first.");
       return;
     }
 
@@ -601,15 +394,6 @@ function SelfieVerificationPanel({
 
     if (!handHoldSatisfiedRef.current) {
       setVerificationError("Match the requested gesture for 3 seconds to verify.");
-      return;
-    }
-
-    const livenessPassed =
-      livenessSequence.length > 0 &&
-      livenessSequence.every((item) => livenessCompleted.includes(item.key));
-
-    if (!livenessPassed) {
-      setVerificationError("Complete all liveness checks before approval.");
       return;
     }
 
@@ -635,11 +419,6 @@ function SelfieVerificationPanel({
       locationError: locationResult.ok ? "" : locationResult.error,
       weather: weatherResult.weather,
       weatherError: weatherResult.ok ? "" : weatherResult.error,
-      liveness: {
-        sequence: livenessSequence,
-        completed: livenessCompleted,
-        passed: livenessPassed,
-      },
       verifiedClientAt: new Date().toISOString(),
     };
 
@@ -648,42 +427,34 @@ function SelfieVerificationPanel({
     setVerifying(false);
     stopCamera();
   };
+
   const isVerified = verificationState.status === "verified";
   const isPending = verificationState.status === "pending";
   const handHoldSeconds = Math.ceil((requiredHandHoldMs - handHoldMs) / 1000);
-  const livenessDoneCount = livenessSequence.filter((item) =>
-    livenessCompleted.includes(item.key),
-  ).length;
 
   return (
     <Card
       icon="camera"
       languageMode={languageMode}
-      title={
-        selectLabel(languageMode, "Selfie Check", "सेल्फी जांच")
-      }
+      title={selectLabel(languageMode, "Selfie Verification", "सेल्फी सत्यापन")}
       subtitle={
         selectLabel(
           languageMode,
-          "Hand-hold selfie verification before high-risk payout",
-          "उच्च जोखिम भुगतान से पहले सरल सेल्फी जांच",
+          "Required before payout: gesture selfie verification",
+          "भुगतान से पहले आवश्यक: जेस्चर सेल्फी सत्यापन",
         )
       }
     >
       <div className="space-y-3 text-sm">
         <div className="board-soft p-3">
-          <p className="kicker">{selectLabel(languageMode, "Verification Gate", "जांच गेट")}</p>
-          <p className="mt-2 font-semibold text-coal-900">
-            {requiresVerification
-              ? "High risk found. Complete selfie check to get payout."
-              : "Risk is normal. Selfie check is optional right now."}
-          </p>
-        </div>
-
-        <div className="board-soft p-3">
           <p className="kicker">{selectLabel(languageMode, "Current Challenge", "मौजूदा चुनौती")}</p>
           <p className="mt-2 font-semibold text-coal-900">
-            {verificationState.gesture || "Tap new gesture to start"}
+            {verificationState.gesture ||
+              selectLabel(
+                languageMode,
+                "Tap Start Gesture Check to begin.",
+                "शुरू करने के लिए जेस्चर जांच शुरू करें दबाएं।",
+              )}
           </p>
           {isPending ? (
             <p className="mt-1 text-xs text-coal-600">
@@ -701,88 +472,48 @@ function SelfieVerificationPanel({
             {selectLabel(languageMode, "Last successful verification", "आखिरी सफल जांच")}: {formatRelativeTime(verificationState.verifiedAt)}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={onGenerateChallenge}
-              className="secondary-btn"
-            >
-              {selectLabel(languageMode, "New Gesture", "नया जेस्चर")}
-            </button>
-            <button
-              type="button"
-              onClick={onResetVerification}
-              className="secondary-btn"
-            >
+            {verificationState.status === "idle" ? (
+              <button type="button" onClick={onGenerateChallenge} className="primary-btn">
+                {selectLabel(languageMode, "Start Gesture Check", "जेस्चर जांच शुरू करें")}
+              </button>
+            ) : null}
+            <button type="button" onClick={onResetVerification} className="secondary-btn">
               {selectLabel(languageMode, "Clear", "साफ करें")}
             </button>
           </div>
         </div>
 
         <div className="board-soft p-3">
-          <p className="kicker">{selectLabel(languageMode, "Liveness Checks", "लाइवनेस जांच")}</p>
-          <p className="mt-2 text-xs text-coal-600">
-            {selectLabel(
-              languageMode,
-              "Complete random prompts: blink and head movements.",
-              "रैंडम संकेत पूरे करें: पलक झपकाना और सिर घुमाना।",
-            )}
-          </p>
-
-          <div className="mt-2 space-y-2">
-            {livenessSequence.map((item) => {
-              const completed = livenessCompleted.includes(item.key);
-              return (
-                <div
-                  key={item.key}
-                  className="flex items-center justify-between rounded-lg border border-coal-200 bg-white px-3 py-2"
-                >
-                  <p className="text-xs font-semibold text-coal-800">{item.label}</p>
-                  <button
-                    type="button"
-                    className={completed ? "secondary-btn" : "primary-btn"}
-                    onClick={() => {
-                      setLivenessCompleted((current) =>
-                        current.includes(item.key)
-                          ? current.filter((entry) => entry !== item.key)
-                          : [...current, item.key],
-                      );
-                    }}
-                  >
-                    {completed
-                      ? selectLabel(languageMode, "Done", "पूर्ण")
-                      : selectLabel(languageMode, "Mark done", "पूरा करें")}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-
-          <p className="mt-2 text-xs font-semibold text-coal-600">
-            {selectLabel(languageMode, "Progress", "प्रगति")}: {livenessDoneCount}/{livenessSequence.length || 0}
-          </p>
-        </div>
-
-        <div className="board-soft p-3">
           <p className="kicker">{selectLabel(languageMode, "Selfie Capture", "सेल्फी लें")}</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {!cameraEnabled ? (
-              <button type="button" onClick={startCamera} className="primary-btn">
-                {selectLabel(languageMode, "Start Camera", "कैमरा चालू करें")}
+          {verificationState.status !== "pending" ? (
+            <p className="mt-2 rounded-lg border border-coal-200 bg-coal-50 px-3 py-2 text-xs font-semibold text-coal-700">
+              {selectLabel(
+                languageMode,
+                "Start gesture check first. Then camera and selfie steps will work.",
+                "पहले जेस्चर जांच शुरू करें। फिर कैमरा और सेल्फी चरण काम करेंगे।",
+              )}
+            </p>
+          ) : (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {!cameraEnabled ? (
+                <button type="button" onClick={startCamera} className="primary-btn">
+                  {selectLabel(languageMode, "Start Camera", "कैमरा चालू करें")}
+                </button>
+              ) : (
+                <button type="button" onClick={stopCamera} className="secondary-btn">
+                  {selectLabel(languageMode, "Stop Camera", "कैमरा बंद करें")}
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={captureSelfie}
+                disabled={!cameraEnabled}
+                className="secondary-btn"
+              >
+                {selectLabel(languageMode, "Take Selfie", "सेल्फी लें")}
               </button>
-            ) : (
-              <button type="button" onClick={stopCamera} className="secondary-btn">
-                {selectLabel(languageMode, "Stop Camera", "कैमरा बंद करें")}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={captureSelfie}
-              disabled={!cameraEnabled}
-              className="secondary-btn"
-            >
-              {selectLabel(languageMode, "Take Selfie", "सेल्फी लें")}
-            </button>
-          </div>
+            </div>
+          )}
 
           {cameraError ? (
             <p className="mt-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700">
@@ -807,9 +538,7 @@ function SelfieVerificationPanel({
             autoPlay
             playsInline
             muted
-            className={`mt-3 w-full rounded-lg border border-coal-200 bg-coal-100 ${
-              cameraEnabled ? "block" : "hidden"
-            }`}
+            className={`mt-3 w-full rounded-lg border border-coal-200 bg-coal-100 ${cameraEnabled ? "block" : "hidden"}`}
           />
           <canvas ref={canvasRef} className="hidden" />
 
@@ -836,18 +565,13 @@ function SelfieVerificationPanel({
                   <p className="font-semibold text-coal-900">Verification evidence</p>
                   <p className="mt-1">Challenge: {evidence.gesture || ""}</p>
                   <p>Detected: {evidence.detectedGesture || ""}</p>
-                  <p className="mt-1">
-                    Hand hold: {Math.round((evidence.handHoldMs || 0) / 1000)}s
-                  </p>
+                  <p className="mt-1">Hand hold: {Math.round((evidence.handHoldMs || 0) / 1000)}s</p>
                   <p>
                     Location: {evidence.location ? `${evidence.location.lat.toFixed(4)}, ${evidence.location.lon.toFixed(4)}` : "Unavailable"}
                   </p>
                   <p>
                     Weather: {evidence.weather?.tempC != null ? `${evidence.weather.tempC}°C` : "N/A"},{" "}
                     {evidence.weather?.windKmph != null ? `${evidence.weather.windKmph} km/h wind` : "N/A"}
-                  </p>
-                  <p>
-                    Liveness: {evidence.liveness?.passed ? "Passed" : "Failed"}
                   </p>
                 </div>
               ) : null}
@@ -857,7 +581,7 @@ function SelfieVerificationPanel({
 
         {isVerified ? (
           <p className="rounded-lg border border-moss-200 bg-moss-50 px-3 py-2 text-xs font-semibold text-moss-600">
-            {"Verified. High-risk payout is now unlocked for a short time."}
+            {"Verified. Payout is now unlocked for a short time."}
           </p>
         ) : null}
       </div>

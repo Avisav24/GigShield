@@ -139,7 +139,7 @@ export function getTriggerConfidenceScore({ triggerId, weatherReliability, perso
 
   return {
     score,
-    label: score >= 0.85 ? "High" : score >= 0.65 ? "Medium" : "Low",
+    label: score >= 0.85 ? "Strong" : score >= 0.65 ? "Normal" : "Weak",
   };
 }
 

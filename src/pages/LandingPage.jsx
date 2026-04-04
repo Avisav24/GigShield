@@ -13,6 +13,8 @@ import {
   Lock,
   CheckCircle2,
   ArrowUp,
+  PlayCircle,
+  ExternalLink,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { selectLabel } from "../utils/i18n";
@@ -91,7 +93,7 @@ export default function LandingPage() {
         {/* Content Wrapper */}
         <div className="relative z-10 flex flex-1 flex-col">
           {/* Main Content Area */}
-          <div className="pointer-events-none flex flex-1 flex-col items-center justify-center py-12 px-4 md:py-20 flex-shrink-0">
+          <div className="pointer-events-none flex flex-1 flex-col items-center justify-center py-8 px-4 md:py-20 flex-shrink-0">
             <div className="pointer-events-auto flex w-full max-w-5xl flex-col items-center justify-center text-center">
               <span className="mb-6 flex items-center gap-2 rounded-full bg-white/70 px-4 py-1.5 text-xs md:text-sm font-bold uppercase tracking-[0.2em] text-gray-800 shadow-sm backdrop-blur-md">
                 <Zap size={14} className="text-gray-400" />
@@ -110,14 +112,14 @@ export default function LandingPage() {
                     className="floating-icon h-16 w-16 md:h-32 md:w-32 object-contain mix-blend-multiply opacity-70"
                   />
                 </div>
-                <h1 className="hero-text text-5xl font-medium leading-none tracking-tight text-gray-800 md:text-7xl lg:text-[5.5rem] drop-shadow-md">
+                <h1 className="hero-text text-3xl sm:text-5xl font-medium leading-none tracking-tight text-gray-800 md:text-7xl lg:text-[5.5rem] drop-shadow-md">
                   {selectLabel(
                     languageMode,
                     "Protect income.",
                     "आय सुरक्षित रखें।",
                   )}
                 </h1>
-                <h1 className="hero-text text-5xl font-extrabold leading-none tracking-tight text-[#1a2229] md:text-7xl lg:text-[5.5rem] drop-shadow-md">
+                <h1 className="hero-text text-3xl sm:text-5xl font-extrabold leading-none tracking-tight text-[#1a2229] md:text-7xl lg:text-[5.5rem] drop-shadow-md">
                   {selectLabel(
                     languageMode,
                     "Ride through every disruption.",
@@ -132,11 +134,11 @@ export default function LandingPage() {
                   />
                 </div>
               </div>
-              <p className="hero-text mb-8 mt-8 max-w-3xl text-sm md:text-xl text-gray-900 bg-white/60 backdrop-blur-xl rounded-2xl p-5 shadow-lg border border-white/40 font-medium leading-relaxed">
+              <p className="hero-text mb-6 mt-6 max-w-3xl text-sm md:text-xl text-gray-900 bg-white/60 backdrop-blur-xl rounded-2xl p-4 sm:p-5 shadow-lg border border-white/40 font-medium leading-relaxed">
                 {selectLabel(
                   languageMode,
-                  "GigShield protects delivery workers across Zomato and Swiggy with automatic payouts triggered by environmental and platform events.",
-                  "GigShield Zomato और Swiggy जैसे प्लेटफॉर्म पर काम करने वाले डिलीवरी वर्कर्स की सुरक्षा करता है और पर्यावरण/प्लेटफॉर्म इवेंट पर स्वतः भुगतान देता है।",
+                  "GigShield gives delivery workers automatic emergency support money when work is disrupted by city conditions or app shutdowns.",
+                  "GigShield डिलीवरी वर्कर्स को स्वतः इमरजेंसी सहायता राशि देता है, जब शहर की स्थिति या ऐप बंद होने से काम रुक जाता है।",
                 )}
               </p>
 
@@ -144,7 +146,7 @@ export default function LandingPage() {
                 <button
                   type="button"
                   onClick={() => navigate("/signin")}
-                  className="rounded-full bg-[#202A36] px-8 py-3.5 text-lg font-bold text-white shadow-xl transition-all hover:bg-[#1a2229] hover:-translate-y-1 border border-white/80"
+                  className="rounded-full bg-[#202A36] px-6 sm:px-8 py-3 text-base sm:text-lg font-bold text-white shadow-xl transition-all hover:bg-[#1a2229] hover:-translate-y-1 border border-white/80"
                 >
                   {selectLabel(
                     languageMode,
@@ -157,7 +159,7 @@ export default function LandingPage() {
               {/* About Section - Integrated Triggers & Fraud Guard */}
               <div
                 id="about-section"
-                className="mt-32 w-full max-w-7xl mx-auto space-y-32 pointer-events-auto"
+                className="mt-16 md:mt-32 w-full max-w-7xl mx-auto space-y-16 md:space-y-32 pointer-events-auto"
               >
                 {/* Section Header */}
                 <div className="text-center space-y-6 max-w-3xl mx-auto mb-20 bg-white/40 backdrop-blur-xl rounded-3xl p-8 border border-white/60 shadow-lg">
@@ -185,9 +187,9 @@ export default function LandingPage() {
                   </h2>
                 </div>
 
-                <div className="grid lg:grid-cols-2 gap-20 items-stretch text-left">
+                <div className="grid lg:grid-cols-2 gap-10 lg:gap-20 items-stretch text-left">
                   {/* Left Column: Triggers */}
-                  <div className="flex flex-col h-full space-y-12 bg-white/60 backdrop-blur-xl rounded-[3rem] p-10 border border-white/60 shadow-xl">
+                  <div className="flex flex-col h-full space-y-8 sm:space-y-12 bg-white/60 backdrop-blur-xl rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 border border-white/60 shadow-xl">
                     <div className="space-y-4">
                       <div className="w-16 h-16 bg-blue-50 rounded-3xl flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
                         <Zap className="w-8 h-8" />
@@ -195,15 +197,15 @@ export default function LandingPage() {
                       <h3 className="text-3xl font-black text-gray-900">
                         {selectLabel(
                           languageMode,
-                          "The Trigger Engine",
-                          "ट्रिगर इंजन",
+                          "Emergency Detection",
+                          "इमरजेंसी पहचान",
                         )}
                       </h3>
                       <p className="text-gray-500 font-medium leading-relaxed">
                         {selectLabel(
                           languageMode,
-                          "Our system monitors environmental and platform signals in real-time. Payouts are issued automatically when verified conditions are met—no manual claims needed.",
-                          "हमारा सिस्टम रियल-टाइम में पर्यावरण और प्लेटफ़ॉर्म संकेतों की निगरानी करता है। शर्तें पूरी होने पर भुगतान स्वतः किया जाता है।",
+                          "We continuously check weather, air quality, and app availability. If emergency conditions are confirmed, support money starts automatically.",
+                          "हम लगातार मौसम, वायु गुणवत्ता और ऐप उपलब्धता की जांच करते हैं। इमरजेंसी स्थिति सत्यापित होते ही सहायता राशि स्वतः शुरू हो जाती है।",
                         )}
                       </p>
                     </div>
@@ -214,8 +216,8 @@ export default function LandingPage() {
                           icon: <CloudRain className="w-5 h-5" />,
                           title: selectLabel(
                             languageMode,
-                            "Weather Data",
-                            "मौसम डेटा",
+                            "Weather Emergency",
+                            "मौसम इमरजेंसी",
                           ),
                           desc: selectLabel(
                             languageMode,
@@ -227,8 +229,8 @@ export default function LandingPage() {
                           icon: <Wind className="w-5 h-5" />,
                           title: selectLabel(
                             languageMode,
-                            "AQI Monitoring",
-                            "AQI निगरानी",
+                            "Air Quality Emergency",
+                            "वायु गुणवत्ता इमरजेंसी",
                           ),
                           desc: selectLabel(
                             languageMode,
@@ -240,8 +242,8 @@ export default function LandingPage() {
                           icon: <WifiOff className="w-5 h-5" />,
                           title: selectLabel(
                             languageMode,
-                            "Platform Outages",
-                            "प्लेटफ़ॉर्म आउटेज",
+                            "App Outage Emergency",
+                            "ऐप बंद इमरजेंसी",
                           ),
                           desc: selectLabel(
                             languageMode,
@@ -253,8 +255,8 @@ export default function LandingPage() {
                           icon: <MapPinOff className="w-5 h-5" />,
                           title: selectLabel(
                             languageMode,
-                            "Zone Closures",
-                            "ज़ोन बंदी",
+                            "Area Closure Emergency",
+                            "क्षेत्र बंद इमरजेंसी",
                           ),
                           desc: selectLabel(
                             languageMode,
@@ -282,7 +284,7 @@ export default function LandingPage() {
                   </div>
 
                   {/* Right Column: Fraud Guard */}
-                  <div className="flex flex-col h-full space-y-12 bg-gray-900 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+                  <div className="flex flex-col h-full space-y-8 sm:space-y-12 bg-gray-900 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-10 shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full blur-[100px]" />
 
                     <div className="space-y-4 relative z-10">
@@ -292,15 +294,15 @@ export default function LandingPage() {
                       <h3 className="text-3xl font-black text-white">
                         {selectLabel(
                           languageMode,
-                          "Fraud Guard Protection",
-                          "फ्रॉड गार्ड सुरक्षा",
+                          "Trust & Verification",
+                          "ट्रस्ट और सत्यापन",
                         )}
                       </h3>
                       <p className="text-gray-400 font-medium leading-relaxed">
                         {selectLabel(
                           languageMode,
-                          "GigShield establishes trust using risk scoring and verification gates. This ensures that only genuine delivery workers receive payouts during verified disruptions.",
-                          "GigShield जोखिम स्कोरिंग और सत्यापन गेट का उपयोग करके भरोसा बनाता है। यह सुनिश्चित करता है कि केवल असली वर्कर्स को ही भुगतान मिले।",
+                          "We verify identity and account behavior so emergency support reaches genuine workers quickly and safely.",
+                          "हम पहचान और अकाउंट गतिविधि सत्यापित करते हैं, ताकि इमरजेंसी सहायता सही वर्कर्स तक तेजी से और सुरक्षित पहुंचे।",
                         )}
                       </p>
                     </div>
@@ -311,24 +313,24 @@ export default function LandingPage() {
                           icon: <Activity className="w-5 h-5" />,
                           text: selectLabel(
                             languageMode,
-                            "Continuous behavior risk scoring",
-                            "लगातार व्यवहार जोखिम स्कोरिंग",
+                            "Continuous trust checks",
+                            "लगातार ट्रस्ट जांच",
                           ),
                         },
                         {
                           icon: <ScanFace className="w-5 h-5" />,
                           text: selectLabel(
                             languageMode,
-                            "Selfie-based identity verification gates",
-                            "सेल्फी-आधारित पहचान सत्यापन गेट",
+                            "Quick selfie identity check",
+                            "तेज़ सेल्फी पहचान जांच",
                           ),
                         },
                         {
                           icon: <CheckCircle2 className="w-5 h-5" />,
                           text: selectLabel(
                             languageMode,
-                            "Transparent payout decision history",
-                            "पारदर्शी भुगतान निर्णय इतिहास",
+                            "Clear reason for every payment",
+                            "हर भुगतान का स्पष्ट कारण",
                           ),
                         },
                       ].map((item, i) => (
@@ -348,15 +350,15 @@ export default function LandingPage() {
                       <h4 className="text-xl font-black mb-2">
                         {selectLabel(
                           languageMode,
-                          "Unmatched Trust",
-                          "अतुलनीय भरोसा",
+                          "Built for Fair Support",
+                          "निष्पक्ष सहायता के लिए निर्मित",
                         )}
                       </h4>
                       <p className="text-gray-500 text-xs font-bold leading-relaxed">
                         {selectLabel(
                           languageMode,
-                          "Our multi-layer verification process reduces fraud by 98% while ensuring 100% payout speed for honest riders.",
-                          "हमारी बहु-स्तरीय सत्यापन प्रक्रिया धोखाधड़ी को 98% तक कम करती है और असली राइडर्स को तेज़ भुगतान सुनिश्चित करती है।",
+                          "Fast verification helps us send support quickly to genuine riders and stop misuse.",
+                          "तेज़ सत्यापन से हम असली राइडर्स को जल्दी सहायता भेजते हैं और गलत उपयोग रोकते हैं।",
                         )}
                       </p>
                     </div>
@@ -390,7 +392,7 @@ export default function LandingPage() {
                     <ShieldCheck className="h-5 w-5 text-gray-700" />
                   </div>
                   <h3 className="font-bold text-gray-800 text-lg md:text-xl tracking-tight">
-                    {selectLabel(languageMode, "Full Coverage", "पूर्ण कवरेज")}
+                    {selectLabel(languageMode, "Emergency Coverage", "इमरजेंसी कवरेज")}
                   </h3>
                   <p className="text-gray-700 mt-2 text-sm leading-relaxed font-medium">
                     {selectLabel(
@@ -434,7 +436,7 @@ export default function LandingPage() {
                     className="floating-icon h-10 w-10 md:h-14 md:w-14 object-contain mb-4 drop-shadow-sm mix-blend-multiply"
                   />
                   <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-500">
-                    {selectLabel(languageMode, "Trigger Engine", "ट्रिगर इंजन")}
+                    {selectLabel(languageMode, "Emergency Signals", "इमरजेंसी संकेत")}
                   </p>
                   <p className="mt-3 font-semibold text-gray-900 text-sm md:text-base leading-snug">
                     {selectLabel(
@@ -451,13 +453,13 @@ export default function LandingPage() {
                     className="floating-icon h-10 w-10 md:h-14 md:w-14 object-contain mb-4 drop-shadow-sm mix-blend-multiply"
                   />
                   <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-500">
-                    {selectLabel(languageMode, "Decisioning", "निर्णय प्रणाली")}
+                    {selectLabel(languageMode, "Smart Decision", "स्मार्ट निर्णय")}
                   </p>
                   <p className="mt-3 font-semibold text-gray-900 text-sm md:text-base leading-snug">
                     {selectLabel(
                       languageMode,
-                      "AI signal fusion & payout thresholds",
-                      "AI संकेत संयोजन और भुगतान सीमा",
+                      "AI checks all emergency signals before sending support",
+                      "AI सहायता भेजने से पहले सभी इमरजेंसी संकेतों की जांच करता है",
                     )}
                   </p>
                 </article>
@@ -470,15 +472,15 @@ export default function LandingPage() {
                   <p className="text-xs font-bold uppercase tracking-[0.15em] text-gray-500">
                     {selectLabel(
                       languageMode,
-                      "Fraud Control",
-                      "फ्रॉड नियंत्रण",
+                      "Trust Protection",
+                      "ट्रस्ट सुरक्षा",
                     )}
                   </p>
                   <p className="mt-3 font-semibold text-gray-900 text-sm md:text-base leading-snug">
                     {selectLabel(
                       languageMode,
-                      "Risk scoring with verification gates",
-                      "सत्यापन गेट के साथ जोखिम स्कोरिंग",
+                      "Verification checks keep support safe for real workers",
+                      "सत्यापन जांच से सहायता असली वर्कर्स के लिए सुरक्षित रहती है",
                     )}
                   </p>
                 </article>
@@ -502,6 +504,62 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+
+          <section className="w-full px-4 md:px-8 pb-10 z-10 pointer-events-auto">
+            <div className="mx-auto max-w-5xl rounded-[2rem] border border-white/70 bg-gradient-to-br from-white/90 to-white/70 p-5 md:p-8 shadow-2xl backdrop-blur-md">
+              <div className="flex flex-col items-center text-center">
+                <span className="inline-flex items-center gap-2 rounded-full border border-red-100 bg-red-50 px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] text-red-600">
+                  <PlayCircle className="h-4 w-4" />
+                  {selectLabel(languageMode, "Demo Video", "डेमो वीडियो")}
+                </span>
+
+                <h3 className="mt-4 text-2xl md:text-4xl font-black text-gray-900 leading-tight">
+                  {selectLabel(
+                    languageMode,
+                    "Watch GigShield in Action",
+                    "GigShield को काम करते हुए देखें",
+                  )}
+                </h3>
+                <p className="mt-2 max-w-2xl text-sm md:text-base font-semibold text-gray-600">
+                  {selectLabel(
+                    languageMode,
+                    "A quick walkthrough of how protection, trigger detection, and instant payouts work in real scenarios.",
+                    "वास्तविक स्थितियों में सुरक्षा, ट्रिगर डिटेक्शन और तुरंत भुगतान कैसे काम करते हैं, इसका छोटा walkthrough।",
+                  )}
+                </p>
+              </div>
+
+              <div className="mt-6 overflow-hidden rounded-2xl border border-gray-200 shadow-xl bg-black ring-1 ring-white/60">
+                <div className="relative w-full pt-[56.25%]">
+                  <iframe
+                    className="absolute inset-0 h-full w-full"
+                    src="https://www.youtube.com/embed/OH6pftc2VHI"
+                    title="GigShield overview video"
+                    loading="lazy"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    referrerPolicy="strict-origin-when-cross-origin"
+                    allowFullScreen
+                  />
+                </div>
+              </div>
+
+              <div className="mt-5 flex justify-center">
+                <a
+                  href="https://youtu.be/OH6pftc2VHI?si=vNn-b8y2Q6USGQ2h"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#202A36] px-6 py-3 text-sm md:text-base font-bold text-white shadow-lg transition-all hover:bg-[#111827] hover:-translate-y-0.5"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {selectLabel(
+                    languageMode,
+                    "Watch on YouTube",
+                    "YouTube पर देखें",
+                  )}
+                </a>
+              </div>
+            </div>
+          </section>
 
           <div className="w-full pb-8 flex justify-center z-10 pointer-events-auto">
             <button

@@ -48,7 +48,7 @@ export function getPayoutForTrigger(triggerEvents, triggerId, planId, options = 
       dailyCap: getDailyPayoutCap(planId),
       remainingCap: 0,
       status: "invalid-trigger",
-      reason: "Trigger is not supported for this plan.",
+      reason: "This emergency type is not covered in your current plan.",
       isCoveredNow: false,
       coverageHours,
     };
@@ -81,7 +81,7 @@ export function getPayoutForTrigger(triggerEvents, triggerId, planId, options = 
       dailyCap,
       remainingCap,
       status: "blocked-coverage",
-      reason: `Coverage window closed. Active hours: ${coverageHours}.`,
+      reason: `Support is available only during your protection hours (${coverageHours}).`,
       isCoveredNow,
       coverageHours,
     };
@@ -94,7 +94,7 @@ export function getPayoutForTrigger(triggerEvents, triggerId, planId, options = 
       dailyCap,
       remainingCap,
       status: "blocked-cap",
-      reason: "Daily payout cap has been reached.",
+      reason: "Today support limit is already fully used.",
       isCoveredNow,
       coverageHours,
     };
@@ -111,8 +111,8 @@ export function getPayoutForTrigger(triggerEvents, triggerId, planId, options = 
     status,
     reason:
       status === "capped"
-        ? "Payout partially applied due to daily cap."
-        : "Payout applied successfully.",
+        ? "Partial support approved because today limit is close."
+        : "Support approved successfully.",
     isCoveredNow,
     coverageHours,
   };

@@ -16,20 +16,20 @@ function EarningsSnapshot({
       icon="money"
       languageMode={languageMode}
       title={
-        selectLabel(languageMode, "Protected", "सुरक्षित")
+        selectLabel(languageMode, "Support Money", "सहायता राशि")
       }
       subtitle={
         selectLabel(
           languageMode,
-          "Money status",
-          "पेमेंट स्थिति",
+          "Easy view of your insurance support",
+          "आपकी बीमा सहायता का आसान विवरण",
         )
       }
     >
       <div className="grid gap-6">
         <div className="flex flex-col">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
-            {selectLabel(languageMode, "Protected this week", "इस हफ्ते सुरक्षित")}
+            {selectLabel(languageMode, "Total Support This Week", "इस सप्ताह कुल सहायता")}
           </p>
           <p className="text-4xl font-black text-gray-900 tracking-tighter">
             {formatCurrency(earningsProtectedThisWeek)}
@@ -38,7 +38,7 @@ function EarningsSnapshot({
 
         <div className="flex flex-col border-t border-gray-100 pt-6">
           <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">
-            {selectLabel(languageMode, "Last support payment", "पिछला भुगतान")}
+            {selectLabel(languageMode, "Latest Payment", "नवीनतम भुगतान")}
           </p>
           <p className="text-2xl font-black text-gray-400 tracking-tight">
             {formatCurrency(lastPayoutAmount)}

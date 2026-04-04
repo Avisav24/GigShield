@@ -7,7 +7,6 @@ import EarningsSnapshot from "../components/EarningsSnapshot";
 import FraudDetectionIndicator from "../components/FraudDetectionIndicator";
 import PlanSummary from "../components/PlanSummary";
 import TriggerSimulationPanel from "../components/TriggerSimulationPanel";
-import LanguageToggle from "../components/LanguageToggle";
 import activityData from "../data/activityData.json";
 import fraudScores from "../data/fraudScores.json";
 import planDetails from "../data/planDetails.json";
@@ -83,7 +82,7 @@ export default function DashboardPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [session] = useState(() => getSession());
-  const { languageMode, setLanguageMode } = useSiteLanguage();
+  const { languageMode } = useSiteLanguage();
 
   // Core States
   const [selectedPlatforms, setSelectedPlatforms] = useState(["Swiggy", "Zomato", "Blinkit"]);
@@ -97,7 +96,7 @@ export default function DashboardPage() {
   const [weeklyTrend, setWeeklyTrend] = useState(() => getWeeklyTrend(getPayoutHistory()));
   const [showOnboarding, setShowOnboarding] = useState(() => localStorage.getItem(onboardingStorageKey) !== "done");
 
-  const availablePlatforms = ["Swiggy", "Zomato", "Blinkit", "Zepto", "BigBasket", "Porter"];
+  const availablePlatforms = ["Swiggy", "Zomato", "Blinkit"];
   const persistedPlanId = localStorage.getItem(selectedPlanStorageKey);
   const resolvedPlanId = searchParams.get("plan") || session?.selectedPlanId || persistedPlanId || userProfile.selectedPlanId;
   const selectedPlan = planDetails.find((p) => p.id === resolvedPlanId) ?? planDetails[0];
@@ -129,7 +128,17 @@ export default function DashboardPage() {
     const triggerRules = evaluateTriggerRules({ triggerId, now });
 
     if (triggerRules.cooldownBlocked || triggerRules.dedupBlocked) {
-      const blockedReason = triggerRules.cooldownBlocked ? `Cooling down. Retry in ${triggerRules.cooldownRemainingSec}s.` : "Duplicate blocked.";
+      const blockedReason = triggerRules.cooldownBlocked
+        ? selectLabel(
+            languageMode,
+            `Please wait ${triggerRules.cooldownRemainingSec}s, then check again.`,
+            `${triggerRules.cooldownRemainingSec} सेकंड बाद फिर से जांचें।`,
+          )
+        : selectLabel(
+            languageMode,
+            "This emergency was already checked recently.",
+            "इस इमरजेंसी की जांच अभी हाल में हो चुकी है।",
+          );
       const status = triggerRules.cooldownBlocked ? "blocked-cooldown" : "blocked-dedup";
       setLatestPayoutMeta({ status, reason: blockedReason, basePayout: 0, remainingCap: Math.max(0, dailyPayoutCap - paidTodayAmount), dailyCap: dailyPayoutCap });
       setLatestTriggerId(triggerId);
@@ -179,50 +188,53 @@ export default function DashboardPage() {
   };
 
   const timelineEntries = useMemo(() => [
-    { id: '1', premium: displayWeeklyPremium, reason: 'Current premium', changedAt: new Date().toISOString(), platformCount, riskLevel: displayRiskLevel, riskMultiplier: displayRiskMultiplier, deltaMeta: { label: 'Active', classes: 'bg-green-100 text-green-700' } }
+    { id: '1', premium: displayWeeklyPremium, reason: 'Current weekly cost', changedAt: new Date().toISOString(), platformCount, riskLevel: displayRiskLevel, riskMultiplier: displayRiskMultiplier, deltaMeta: { label: 'Active', classes: 'bg-green-100 text-green-700' } }
   ], [displayWeeklyPremium, platformCount, displayRiskLevel, displayRiskMultiplier]);
 
   const timelineEntriesWithDelta = useMemo(() => timelineEntries.map(e => ({ ...e, relativeTime: formatRelativeTime(e.changedAt) })), [timelineEntries]);
 
   const coverageActive = selectedPlatforms.length > 0;
+  const weeklyPaidAmount = weeklyTrend.reduce((sum, day) => sum + Number(day.paidAmount || 0), 0);
+  const weeklySupportCap = dailyPayoutCap * 7;
+  const weeklySupportLeft = Math.max(0, weeklySupportCap - weeklyPaidAmount);
+  const emergencyActive = Boolean(latestTrigger);
 
   return (
     <main className="min-h-screen bg-[#f4f5f7] font-sans pb-24 text-gray-900 overflow-x-hidden">
       {/* Dynamic Nav */}
-      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <Link to="/" className="text-xl font-extrabold tracking-tight">GIGSHIELD.</Link>
           <span className="bg-gray-100 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-widest text-gray-500 border border-gray-200">Live</span>
         </div>
         <div className="flex items-center gap-4">
-          <LanguageToggle languageMode={languageMode} setLanguageMode={setLanguageMode} />
           <button onClick={async () => { await supabase.auth.signOut(); clearSession(); navigate("/auth"); }} className="text-xs font-bold uppercase tracking-widest text-gray-400 hover:text-gray-900 transition-colors">Sign Out</button>
         </div>
       </nav>
 
-      <div className="max-w-[1400px] mx-auto px-6 py-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 py-6 sm:py-10">
         <header className="mb-12">
-          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">{selectLabel(languageMode, "Worker Console", "वर्कर कंसोल")}</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-2">{selectLabel(languageMode, "Income Protection Dashboard", "आय सुरक्षा डैशबोर्ड")}</p>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
             <div>
-              <h1 className="text-5xl md:text-6xl font-black tracking-tighter leading-none mb-6">
-                {selectLabel(languageMode, "Hello", "नमस्ते")}, <span className="text-gray-300">{session?.name || "Rider"}</span>
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-black tracking-tighter leading-none mb-4 sm:mb-6">
+                {selectLabel(languageMode, "Welcome", "स्वागत है")}, <span className="text-gray-300">{session?.name || "Rider"}</span>
               </h1>
-              <div className="flex flex-wrap items-center gap-8 text-sm font-bold text-gray-500">
+              <div className="flex flex-wrap items-center gap-4 sm:gap-8 text-xs sm:text-sm font-bold text-gray-500">
                 <span className="flex items-center gap-2"><MapPin size={16} />{session?.city || "New Delhi"}</span>
                 <span className="flex items-center gap-2"><Fingerprint size={16} />{session?.workerId || "GS-8.2k"}</span>
-                <span className={`flex items-center gap-2 transition-colors ${coverageActive ? "text-green-600" : "text-red-400"}`}><Clock size={16} />{selectedPlan.coverageHours}</span>
+                <span className={`flex items-center gap-2 transition-colors ${coverageActive ? "text-green-600" : "text-red-400"}`}><Clock size={16} />{selectLabel(languageMode, "Protection Hours", "सुरक्षा समय")} : {selectedPlan.coverageHours}</span>
               </div>
             </div>
             <div className="flex flex-col items-end gap-2">
-               <div className="bg-white border-2 border-gray-900 rounded-2xl px-5 py-4 flex items-center gap-4 shadow-xl">
+               <div className="bg-white border-2 border-gray-900 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 flex items-center gap-3 sm:gap-4 shadow-xl">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{selectLabel(languageMode, "Weekly Premium", "साप्ताहिक प्रीमियम")}</p>
-                  <p className="text-3xl font-black tracking-tighter">{formatCurrency(displayWeeklyPremium)}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{selectLabel(languageMode, "Your Weekly Cost", "आपका साप्ताहिक खर्च")}</p>
+                  <p className="text-2xl sm:text-3xl font-black tracking-tighter">{formatCurrency(displayWeeklyPremium)}</p>
                 </div>
                 <div className="h-10 w-px bg-gray-100" />
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{selectLabel(languageMode, "Risk Level", "जोखिम स्तर")}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">{selectLabel(languageMode, "Trust Status", "ट्रस्ट स्थिति")}</p>
                   <p className={`text-sm font-black uppercase ${displayRiskLevel === "High" ? "text-red-500" : "text-green-600"}`}>{displayRiskLevel}</p>
                 </div>
               </div>
@@ -230,13 +242,40 @@ export default function DashboardPage() {
           </div>
         </header>
 
+        <section className="mb-10 sm:mb-12 grid gap-3 sm:gap-4 md:grid-cols-3">
+          <article className="rounded-3xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              {selectLabel(languageMode, "Emergency Status", "इमरजेंसी स्थिति")}
+            </p>
+            <p className={`mt-2 text-xl sm:text-2xl font-black tracking-tight ${emergencyActive ? "text-green-600" : "text-gray-700"}`}>
+              {emergencyActive
+                ? selectLabel(languageMode, "Emergency Detected", "इमरजेंसी मिली")
+                : selectLabel(languageMode, "No Emergency", "कोई इमरजेंसी नहीं")}
+            </p>
+          </article>
+
+          <article className="rounded-3xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              {selectLabel(languageMode, "You Get Today", "आज आपको मिलेगा")}
+            </p>
+            <p className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-gray-900">{formatCurrency(Math.max(0, lastPayoutAmount))}</p>
+          </article>
+
+          <article className="rounded-3xl border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
+            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+              {selectLabel(languageMode, "Support Left This Week", "इस सप्ताह बची सहायता")}
+            </p>
+            <p className="mt-2 text-xl sm:text-2xl font-black tracking-tight text-gray-900">{formatCurrency(weeklySupportLeft)}</p>
+          </article>
+        </section>
+
         {/* Platform Manager Section */}
         <section className="mb-12">
           <div className="flex items-center justify-between mb-6">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{selectLabel(languageMode, "Active Work Apps", "सक्रिय काम के ऐप्स")}</p>
-            <p className="text-xs font-bold text-gray-400">{selectedPlatforms.length} {selectLabel(languageMode, "Apps active", "ऐप्स सक्रिय")}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{selectLabel(languageMode, "Where You Work", "जहां आप काम करते हैं")}</p>
+            <p className="text-xs font-bold text-gray-400">{selectedPlatforms.length} {selectLabel(languageMode, "Apps connected", "ऐप्स जुड़े")}</p>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
             {availablePlatforms.map((p) => {
               const isActive = selectedPlatforms.includes(p);
               return (
@@ -260,7 +299,7 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <div className="grid lg:grid-cols-3 gap-12">
+        <div className="grid lg:grid-cols-3 gap-8 sm:gap-12">
           {/* Main Controls */}
           <div className="lg:col-span-2 space-y-12">
             <TriggerSimulationPanel
@@ -300,7 +339,7 @@ export default function DashboardPage() {
             />
 
             <div className="space-y-6">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{selectLabel(languageMode, "Premium Timeline", "प्रीमियम टाइमलाइन")}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{selectLabel(languageMode, "Why This Weekly Cost", "यह साप्ताहिक खर्च क्यों")}</p>
               <div className="space-y-4">
                 {timelineEntriesWithDelta.map((e) => (
                   <div key={e.id} className="bg-white border border-gray-200 rounded-3xl p-6 transition-all hover:border-gray-900/10 hover:shadow-soft">
@@ -309,7 +348,7 @@ export default function DashboardPage() {
                        <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter ${e.deltaMeta.classes}`}>{e.deltaMeta.label}</span>
                     </div>
                     <p className="text-[10px] font-bold text-gray-400">
-                      {e.platformCount} platforms | Risk {e.riskLevel} x{Number(e.riskMultiplier).toFixed(2)}
+                      {selectLabel(languageMode, "Connected apps", "जुड़े ऐप्स")}: {e.platformCount} | {selectLabel(languageMode, "Trust", "ट्रस्ट")}: {e.riskLevel}
                     </p>
                   </div>
                 ))}
@@ -317,7 +356,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="space-y-6">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{selectLabel(languageMode, "Weekly Activity", "साप्ताहिक गतिविधि")}</p>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">{selectLabel(languageMode, "Support Activity This Week", "इस सप्ताह सहायता गतिविधि")}</p>
               <div className="bg-white border border-gray-200 rounded-3xl p-8">
                 <div className="flex h-32 items-end justify-between gap-3">
                   {weeklyTrend.map((d) => (

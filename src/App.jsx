@@ -97,7 +97,7 @@ function App() {
     <BrowserRouter>
       <NotificationStack />
       <Navbar />
-      <div className="pt-24 lg:pt-32 min-h-screen bg-[#f4f5f7]">
+      <div className="pt-36 sm:pt-32 lg:pt-32 min-h-screen bg-[#f4f5f7]">
         <ErrorBoundary>
           <Suspense
             fallback={

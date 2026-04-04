@@ -144,38 +144,9 @@ function checkGeoConsistency({ claimLocation, workerCity }) {
   };
 }
 
-function checkLiveness(evidence) {
-  const liveness = evidence?.liveness || null;
-  const passed = Boolean(liveness?.passed);
-
-  if (!passed) {
-    return {
-      ok: false,
-      reasonCode: payoutFailureReasonCodes.LIVENESS_FAILED,
-      reason: "Blink, head-turn, or random prompt sequence is incomplete",
-    };
-  }
-
-  return {
-    ok: true,
-  };
-}
-
 export function runPayoutSecurityChecks({ evidence, workerCity, strictVerification = true }) {
   const nowIso = new Date().toISOString();
   const fingerprint = getOrCreateDeviceFingerprint();
-
-  if (strictVerification) {
-    const livenessResult = checkLiveness(evidence);
-    if (!livenessResult.ok) {
-      return {
-        ok: false,
-        fingerprint,
-        checkedAt: nowIso,
-        ...livenessResult,
-      };
-    }
-  }
 
   const velocityResult = trackAttemptAndCheckVelocity(fingerprint, nowIso);
   if (!velocityResult.ok) {

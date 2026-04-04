@@ -25,20 +25,20 @@ function FraudDetectionIndicator({
       icon="risk"
       languageMode={languageMode}
       title={
-        selectLabel(languageMode, "Safety Check", "सुरक्षा जांच")
+        selectLabel(languageMode, "Trust Check", "ट्रस्ट जांच")
       }
       subtitle={
         selectLabel(
           languageMode,
-          "Identity verification profile",
-          "पहचान सत्यापन प्रोफ़ाइल",
+          "Keeps support safe for real workers",
+          "यह असली वर्कर्स के लिए सहायता को सुरक्षित रखता है",
         )
       }
     >
       <div className="space-y-8">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-4">
-            {selectLabel(languageMode, "Choose Persona (Demo Simulation)", "प्रोफ़ाइल चुनें (डेमो)")}
+            {selectLabel(languageMode, "Demo: Choose Worker Profile", "डेमो: वर्कर प्रोफ़ाइल चुनें")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             {Object.entries(fraudProfiles).map(([personaKey]) => {
@@ -56,11 +56,11 @@ function FraudDetectionIndicator({
                 >
                   <p className="text-xs font-black uppercase tracking-widest">
                     {personaKey === "normal"
-                      ? selectLabel(languageMode, "Normal", "सामान्य")
-                      : selectLabel(languageMode, "Suspicious", "संदिग्ध")}
+                      ? selectLabel(languageMode, "Verified Worker", "सत्यापित वर्कर")
+                      : selectLabel(languageMode, "Needs Extra Check", "अतिरिक्त जांच आवश्यक")}
                   </p>
                   <p className={`mt-1 text-[10px] font-bold opacity-70 ${isSelected ? "text-white" : "text-gray-500"}`}>
-                    {personaKey === "normal" ? selectLabel(languageMode, "Safe profile", "सुरक्षित") : selectLabel(languageMode, "High risk", "उच्च जोखिम")}
+                    {personaKey === "normal" ? selectLabel(languageMode, "Fast payout path", "तेज़ भुगतान मार्ग") : selectLabel(languageMode, "Verification needed", "सत्यापन आवश्यक")}
                   </p>
                 </button>
               );
@@ -71,7 +71,7 @@ function FraudDetectionIndicator({
         <div className="border-t border-gray-100 pt-8">
           <div className="flex items-center justify-between mb-4">
             <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-              {selectLabel(languageMode, "Safety Score & Status", "सुरक्षा स्कोर और स्थिति")}
+              {selectLabel(languageMode, "Trust Score", "ट्रस्ट स्कोर")}
             </p>
             <span
               className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase tracking-tighter ring-1 ${getRiskBadgeClasses(riskLevel)}`}
@@ -90,14 +90,14 @@ function FraudDetectionIndicator({
             <div className="rounded-2xl bg-red-50 border border-red-100 p-4 animate-enter flex items-start gap-3">
               <div className="h-2 w-2 rounded-full bg-red-500 mt-1.5 animate-pulse" />
               <p className="text-xs font-bold text-red-700 leading-relaxed">
-                {selectLabel(languageMode, "Selfie check required. Instant payout protection active.", "सेल्फी जांच ज़रूरी। भुगतान सुरक्षा लॉक सक्रिय है।")}
+                {selectLabel(languageMode, "Selfie check needed before payment. This protects genuine workers.", "भुगतान से पहले सेल्फी जांच जरूरी है। यह असली वर्कर्स की सुरक्षा करता है।")}
               </p>
             </div>
           ) : (
             <div className="rounded-2xl bg-green-50 border border-green-100 p-4 animate-enter flex items-start gap-3">
               <div className="h-2 w-2 rounded-full bg-green-500 mt-1.5" />
               <p className="text-xs font-bold text-green-700 leading-relaxed">
-                {selectLabel(languageMode, "Profile verified. Instant payout authorized.", "प्रोफ़ाइल सत्यापित। तुरंत भुगतान अधिकृत है।")}
+                {selectLabel(languageMode, "Profile verified. Payment can be sent instantly.", "प्रोफ़ाइल सत्यापित। भुगतान तुरंत भेजा जा सकता है।")}
               </p>
             </div>
           )}
