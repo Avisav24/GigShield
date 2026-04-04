@@ -285,11 +285,11 @@ app.post('/api/automation/risk-check', async (req, res) => {
   }
 });
 
-// ─── Cookie Byte AI Chat (Groq) ───────────────────────────────────────────────────────
+// ─── CookieByte AI Chat (Groq) ───────────────────────────────────────────────────────
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_MODEL   = 'llama-3.3-70b-versatile';
 
-const ARIA_SYSTEM_PROMPT = `You are Cookie Byte, the official AI support assistant for GigShield — India's first parametric income protection platform for gig delivery workers on Zomato, Swiggy, Blinkit, and other platforms.
+const ARIA_SYSTEM_PROMPT = `You are CookieByte, the official AI support assistant for GigShield — India's first parametric income protection platform for gig delivery workers on Zomato, Swiggy, Blinkit, and other platforms.
 
 Your personality: warm, knowledgeable, concise, and empathetic. You speak like a trusted advisor who genuinely cares about the financial wellbeing of delivery riders.
 
@@ -361,13 +361,13 @@ app.post('/api/chat', async (req, res) => {
     const data = await groqRes.json();
     const reply = data.choices?.[0]?.message?.content?.trim();
 
-    if (!reply) return res.status(502).json({ error: 'No response from Cookie Byte.' });
+    if (!reply) return res.status(502).json({ error: 'No response from CookieByte.' });
 
-    console.log(`[Cookie Byte] 💬 replied to ${workerName || 'user'}`);
+    console.log(`[CookieByte] 💬 replied to ${workerName || 'user'}`);
     return res.status(200).json({ reply });
 
   } catch (err) {
-    console.error('[Cookie Byte] Unexpected error:', err);
+    console.error('[CookieByte] Unexpected error:', err);
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -379,7 +379,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('\n══════════════════════════════════════════════════════════');
   console.log(`🚀  GigShield Risk Server  →  http://127.0.0.1:${PORT}`);
   console.log(`✅  POST /api/automation/risk-check`);
-  console.log(`🤖  POST /api/chat  (Cookie Byte — powered by Groq Llama 3.3 70B)`);
+  console.log(`🤖  POST /api/chat  (CookieByte — powered by Groq Llama 3.3 70B)`);
   console.log(`🌤   Weather: ${WEATHER_API_KEY ? 'OpenWeatherMap (API key set)' : 'Open-Meteo (free, no key needed)'}`);
   console.log('══════════════════════════════════════════════════════════\n');
 });

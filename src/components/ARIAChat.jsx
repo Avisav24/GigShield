@@ -17,7 +17,7 @@ function Bubble({ msg }) {
       {/* Avatar */}
       {!isUser && (
         <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-md">
-          <span className="text-[10px] font-black text-white">A</span>
+          <span className="text-[10px] font-black text-white">CB</span>
         </div>
       )}
       <div
@@ -38,7 +38,7 @@ function TypingDots() {
   return (
     <div className="flex gap-2.5 items-end">
       <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-violet-600 flex items-center justify-center flex-shrink-0 shadow-md">
-        <span className="text-[10px] font-black text-white">A</span>
+        <span className="text-[10px] font-black text-white">CB</span>
       </div>
       <div className="bg-white border border-gray-100 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm flex gap-1.5 items-center">
         <span className="w-1.5 h-1.5 rounded-full bg-gray-400 animate-bounce [animation-delay:0ms]" />
@@ -56,7 +56,7 @@ export default function ARIAChat({ session, riskLevel }) {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content: `Hey${session?.name ? ` ${session.name.split(" ")[0]}` : ""}! 👋 I'm **ARIA**, your GigShield AI assistant. Ask me anything about your coverage, payouts, or how the risk engine works. I'm here to help! 🛡️`,
+      content: `Hey${session?.name ? ` ${session.name.split(" ")[0]}` : ""}! 👋 I'm **CookieByte**, your GigShield AI assistant. Ask me anything about your coverage, payouts, or how the risk engine works. I'm here to help! 🛡️`,
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -103,7 +103,7 @@ export default function ARIAChat({ session, riskLevel }) {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "ARIA is unavailable right now.");
+      if (!res.ok) throw new Error(data.error || "CookieByte is unavailable right now.");
 
       setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
       if (!open) setUnread((n) => n + 1);
@@ -132,7 +132,7 @@ export default function ARIAChat({ session, riskLevel }) {
             ? "bg-gray-900 rotate-0 scale-90"
             : "bg-gradient-to-br from-blue-600 to-violet-600 hover:scale-110"
         }`}
-        aria-label="Open ARIA chat"
+        aria-label="Open CookieByte chat"
       >
         {open ? (
           <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
@@ -167,12 +167,12 @@ export default function ARIAChat({ session, riskLevel }) {
         <div className="bg-gradient-to-r from-blue-600 to-violet-600 px-5 py-4 flex items-center gap-3 flex-shrink-0">
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-white/20 border-2 border-white/40 flex items-center justify-center backdrop-blur">
-              <span className="text-sm font-black text-white">A</span>
+              <span className="text-sm font-black text-white">CB</span>
             </div>
             <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-400 border-2 border-white" />
           </div>
           <div>
-            <p className="text-sm font-black text-white tracking-tight">ARIA</p>
+            <p className="text-sm font-black text-white tracking-tight">CookieByte</p>
             <p className="text-[10px] text-white/70 font-medium">Automated Rider Insurance Assistant · Online</p>
           </div>
           <div className="ml-auto flex items-center gap-1.5">
@@ -220,7 +220,7 @@ export default function ARIAChat({ session, riskLevel }) {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask ARIA anything…"
+            placeholder="Ask CookieByte anything…"
             rows={1}
             className="flex-1 resize-none text-sm text-gray-800 placeholder-gray-400 bg-gray-50 border border-gray-200 rounded-2xl px-4 py-2.5 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all"
             style={{ maxHeight: "100px" }}
@@ -239,7 +239,7 @@ export default function ARIAChat({ session, riskLevel }) {
         {/* Footer */}
         <div className="bg-gray-50 border-t border-gray-100 py-2 text-center">
           <p className="text-[9px] font-bold text-gray-300 uppercase tracking-widest">
-            ARIA · Powered by GigShield AI · GigShield 2026
+            CookieByte · Powered by GigShield AI · GigShield 2026
           </p>
         </div>
       </div>
