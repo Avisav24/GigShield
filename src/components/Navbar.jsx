@@ -1,16 +1,28 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import Marquee from "react-fast-marquee";
 import { Zap } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
 import { selectLabel } from "../utils/i18n";
 import { useSiteLanguage } from "../utils/siteLanguage";
+import { supabase } from "../utils/supabase";
 
 export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { languageMode, setLanguageMode } = useSiteLanguage();
   const isHomePage = location.pathname === "/";
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleNavClick = (key) => {
     if (key === "about") {
@@ -103,19 +115,21 @@ export default function Navbar() {
           />
         </div>
 
-        <div className="hidden md:flex gap-3">
-          <button
-            type="button"
-            onClick={() => navigate("/signin")}
-            className="rounded-full bg-[#202A36] px-6 py-2.5 font-semibold text-white shadow-lg transition-all hover:bg-[#1a2229] hover:shadow-xl border border-gray-200/70 text-sm"
-          >
-            {selectLabel(
-              languageMode,
-              "Sign in with Google",
-              "Google से साइन इन",
-            )}
-          </button>
-        </div>
+        {!user && (
+          <div className="hidden md:flex gap-3">
+            <button
+              type="button"
+              onClick={() => navigate("/signin")}
+              className="rounded-full bg-[#202A36] px-6 py-2.5 font-semibold text-white shadow-lg transition-all hover:bg-[#1a2229] hover:shadow-xl border border-gray-200/70 text-sm"
+            >
+              {selectLabel(
+                languageMode,
+                "Sign in with Google",
+                "Google से साइन इन",
+              )}
+            </button>
+          </div>
+        )}
       </nav>
 
       <div className="mt-2 px-2 sm:px-4 lg:hidden">
@@ -139,13 +153,15 @@ export default function Navbar() {
             setLanguageMode={setLanguageMode}
           />
         </div>
-        <button
-          type="button"
-          onClick={() => navigate("/signin")}
-          className="mt-2 w-full rounded-full bg-[#202A36] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
-        >
-          {selectLabel(languageMode, "Sign in with Google", "Google से साइन इन")}
-        </button>
+        {!user && (
+          <button
+            type="button"
+            onClick={() => navigate("/signin")}
+            className="mt-2 w-full rounded-full bg-[#202A36] px-4 py-2.5 text-sm font-semibold text-white shadow-md"
+          >
+            {selectLabel(languageMode, "Sign in with Google", "Google से साइन इन")}
+          </button>
+        )}
       </div>
     </div>
   );
