@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import NotificationStack from "./components/NotificationStack";
@@ -92,6 +92,17 @@ function ProtectedRoute({ children }) {
 }
 
 function App() {
+  return (
+    <BrowserRouter>
+      <AppShell />
+    </BrowserRouter>
+  );
+}
+
+function AppShell() {
+  const location = useLocation();
+  const showGlobalNavbar = location.pathname !== "/";
+
   useEffect(() => {
     const lenis = new Lenis();
     function raf(time) {
@@ -102,7 +113,7 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
+    <>
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -115,8 +126,8 @@ function App() {
         toastClassName="!rounded-2xl !shadow-xl !font-sans !text-sm"
       />
       <NotificationStack />
-      <Navbar />
-      <div className="pt-36 sm:pt-32 lg:pt-32 min-h-screen bg-[#f4f5f7]">
+      {showGlobalNavbar ? <Navbar /> : null}
+      <div className={`${showGlobalNavbar ? "pt-36 sm:pt-32 lg:pt-32" : ""} min-h-screen bg-[#f4f5f7]`}>
         <ErrorBoundary>
           <Suspense
             fallback={
@@ -233,7 +244,7 @@ function App() {
           </Suspense>
         </ErrorBoundary>
       </div>
-    </BrowserRouter>
+    </>
   );
 }
 

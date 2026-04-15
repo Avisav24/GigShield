@@ -73,7 +73,7 @@ function GetProtected() {
             Activate Protection
           </h1>
           <p className="text-sm font-bold text-gray-500">
-            Setup your parametric insurance profile in under 3 minutes.
+            Setup your weekly parametric income protection profile in under 3 minutes.
           </p>
         </header>
 
@@ -106,8 +106,8 @@ function GetProtected() {
           <footer className="mt-16 pt-8 border-t border-gray-200">
             <div className="grid grid-cols-2 gap-8">
               {[
-                { label: "Instant Trigger", desc: "Rain, heat, and AQI spikes" },
-                { label: "Automatic Payouts", desc: "No manual claims required" }
+                { label: "Instant Trigger", desc: "Rain, heat, AQI, and outage events" },
+                { label: "Weekly Cover", desc: "Built around gig worker payout cycles" }
               ].map((item, i) => (
                 <div key={i}>
                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-1">{item.label}</p>

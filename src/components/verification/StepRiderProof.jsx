@@ -1,15 +1,8 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState } from "react";
 
 export default function StepRiderProof({ formData, updateField, onNext }) {
   const fileRef = useRef(null);
   const [status, setStatus] = useState("idle"); // "idle" | "verifying" | "success"
-
-  useEffect(() => {
-    // Reset status if file is removed
-    if (!formData.riderProof) {
-      setStatus("idle");
-    }
-  }, [formData.riderProof]);
 
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
@@ -56,7 +49,7 @@ export default function StepRiderProof({ formData, updateField, onNext }) {
         `}
       </style>
       <div>
-        <p className="kicker mb-1">Step 5 of 7</p>
+        <p className="kicker mb-1">Step 3 of 4</p>
         <h2 className="hero-title text-3xl sm:text-4xl leading-tight">Upload rider proof</h2>
         <p className="mt-2 text-coal-500 text-sm">Upload a screenshot of your delivery profile or dashboard</p>
       </div>

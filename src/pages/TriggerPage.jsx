@@ -18,7 +18,7 @@ const payoutRules = [
   { en: "Coverage time window must be active", hi: "कवरेज समय विंडो सक्रिय होनी चाहिए", icon: <Clock className="w-4 h-4" /> },
   { en: "Daily payout cap must have remaining balance", hi: "दैनिक भुगतान सीमा में शेष राशि होनी चाहिए", icon: <Zap className="w-4 h-4" /> },
   { en: "High risk may require selfie verification", hi: "अधिक जोखिम पर सेल्फी सत्यापन जरूरी हो सकता है", icon: <Zap className="w-4 h-4" /> },
-  { en: "Health, life, accidents excluded", hi: "स्वास्थ्य, जीवन, दुर्घटना और वाहन मरम्मत शामिल नहीं हैं", icon: <Shield className="w-4 h-4" /> },
+  { en: "Health, life, accidents, and vehicle repairs are excluded", hi: "स्वास्थ्य, जीवन, दुर्घटना और वाहन मरम्मत शामिल नहीं हैं", icon: <Shield className="w-4 h-4" /> },
 ];
 
 function TriggerPage() {
@@ -46,7 +46,7 @@ function TriggerPage() {
           <span className="text-gray-400">{selectLabel(languageMode, "work in GigShield.", "GigShield में काम करते हैं।")}</span>
         </h1>
         <p className="mt-6 text-lg text-gray-600 max-w-2xl leading-relaxed">
-          {selectLabel(languageMode, "A trigger is a verified disruption event. When one happens, GigShield checks plan rules and risk controls, then applies payout instantly if conditions match.", "ट्रिगर एक सत्यापित व्यवधान घटना है। शर्तें मिलने पर तुरंत भुगतान होता है।")}
+          {selectLabel(languageMode, "A trigger is a verified disruption event. When one happens, GigShield checks weekly plan rules and risk controls, then applies payout instantly if conditions match.", "ट्रिगर एक सत्यापित व्यवधान घटना है। साप्ताहिक योजना की शर्तें मिलने पर तुरंत भुगतान होता है।")}
         </p>
       </section>
 
@@ -61,6 +61,35 @@ function TriggerPage() {
               <p className="mt-2 text-sm text-gray-600 leading-relaxed">{selectLabel(languageMode, s.detail.en, s.detail.hi)}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      <section className="px-6 sm:px-12 lg:px-24 pb-20 max-w-6xl mx-auto">
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-3">
+              {selectLabel(languageMode, "Parametric Logic", "पैरामेट्रिक लॉजिक")}
+            </p>
+            <p className="text-sm text-gray-700 leading-relaxed">
+              {selectLabel(
+                languageMode,
+                "Workers do not have to prove individual damage. GigShield uses verified external signals like rainfall, AQI, and outage data to trigger payouts automatically.",
+                "वर्कर्स को व्यक्तिगत नुकसान साबित नहीं करना पड़ता। GigShield बारिश, AQI और आउटेज जैसे सत्यापित बाहरी सिग्नल से अपने आप भुगतान ट्रिगर करता है।",
+              )}
+            </p>
+          </div>
+          <div className="rounded-3xl border border-amber-200 bg-amber-50/80 p-6 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700 mb-3">
+              {selectLabel(languageMode, "Strict Exclusions", "सख्त बहिष्करण")}
+            </p>
+            <p className="text-sm text-amber-950 leading-relaxed">
+              {selectLabel(
+                languageMode,
+                "This product is only for income loss caused by external disruptions. It never pays for health treatment, life cover, accidents, or vehicle repair expenses.",
+                "यह उत्पाद केवल बाहरी व्यवधानों से हुई आय हानि के लिए है। यह स्वास्थ्य इलाज, जीवन कवर, दुर्घटना या वाहन मरम्मत खर्च के लिए कभी भुगतान नहीं करता।",
+              )}
+            </p>
+          </div>
         </div>
       </section>
 

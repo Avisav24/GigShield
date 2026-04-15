@@ -1,3 +1,8 @@
+import planDetails from "../../data/planDetails.json";
+import { formatCurrency } from "../../utils/format";
+import { getPersonaRiskProfile } from "../../utils/onboardingProfile";
+import { calculateWeeklyPremium } from "../../utils/pricing";
+
 const triggers = [
   {
     id: "heavy_rain",
@@ -39,6 +44,13 @@ const triggers = [
 
 export default function StepCoverage({ formData, updateField, onActivate, isLoading }) {
   const selected = formData.coverageTriggers || [];
+  const profile = getPersonaRiskProfile(formData);
+  const selectedPlan = planDetails.find((plan) => plan.id === formData.selectedPlanId) ?? planDetails[1];
+  const premium = calculateWeeklyPremium({
+    basePremium: selectedPlan.weeklyPremium,
+    platformCount: formData.platform === "both" ? 2 : 1,
+    riskLevel: profile.riskLevel,
+  });
 
   const toggle = (id) => {
     const next = selected.includes(id) ? selected.filter((t) => t !== id) : [...selected, id];
@@ -48,9 +60,98 @@ export default function StepCoverage({ formData, updateField, onActivate, isLoad
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="kicker mb-1">Step 6 of 7</p>
-        <h2 className="hero-title text-3xl sm:text-4xl leading-tight">Choose your protection triggers</h2>
-        <p className="mt-2 text-coal-500 text-sm">Select the disruptions you want coverage for</p>
+        <p className="kicker mb-1">Step 4 of 4</p>
+        <h2 className="hero-title text-3xl sm:text-4xl leading-tight">Create your weekly protection plan</h2>
+        <p className="mt-2 text-coal-500 text-sm">Select the disruptions you want covered and review your AI risk profile</p>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[1.15fr,0.85fr]">
+        <div className="rounded-2xl border border-coal-200 bg-white p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="kicker">AI Risk Assessment</p>
+              <h3 className="mt-1 text-lg font-semibold text-coal-900">{profile.riskLevel} disruption risk</h3>
+              <p className="mt-1 text-sm text-coal-500">Persona score: {profile.score}/100</p>
+            </div>
+            <div className={`rounded-full px-3 py-1 text-xs font-bold ${
+              profile.riskLevel === "High"
+                ? "bg-red-100 text-red-700"
+                : profile.riskLevel === "Medium"
+                  ? "bg-amber-100 text-amber-700"
+                  : "bg-green-100 text-green-700"
+            }`}>
+              {profile.recommendedPlanId.toUpperCase()} recommended
+            </div>
+          </div>
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-coal-100">
+            <div
+              className={`h-full rounded-full ${
+                profile.riskLevel === "High"
+                  ? "bg-red-500"
+                  : profile.riskLevel === "Medium"
+                    ? "bg-amber-500"
+                    : "bg-green-500"
+              }`}
+              style={{ width: `${profile.score}%` }}
+            />
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {profile.drivers.length > 0 ? profile.drivers.map((driver) => (
+              <span key={driver} className="rounded-full bg-coal-100 px-3 py-1 text-xs font-semibold text-coal-700">
+                {driver}
+              </span>
+            )) : (
+              <span className="rounded-full bg-coal-100 px-3 py-1 text-xs font-semibold text-coal-700">
+                balanced exposure profile
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-electric-200 bg-electric-50 p-5">
+          <p className="kicker">Weekly Pricing</p>
+          <label className="mt-3 block text-sm font-semibold text-coal-700">Choose Plan</label>
+          <div className="mt-2 grid gap-2">
+            {planDetails.map((plan) => {
+              const selectedPlanCard = formData.selectedPlanId === plan.id;
+              return (
+                <button
+                  key={plan.id}
+                  type="button"
+                  onClick={() => updateField("selectedPlanId", plan.id)}
+                  className={`rounded-2xl border px-4 py-3 text-left transition ${
+                    selectedPlanCard
+                      ? "border-coal-900 bg-coal-900 text-white"
+                      : "border-white bg-white/80 text-coal-800 hover:border-coal-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-semibold">{plan.name}</span>
+                    <span className="text-sm font-bold">
+                      {formatCurrency(
+                        calculateWeeklyPremium({
+                          basePremium: plan.weeklyPremium,
+                          platformCount: formData.platform === "both" ? 2 : 1,
+                          riskLevel: profile.riskLevel,
+                        }).adjustedPremium,
+                      )}
+                      /week
+                    </span>
+                  </div>
+                  <p className={`mt-1 text-xs ${selectedPlanCard ? "text-white/70" : "text-coal-500"}`}>{plan.coverageHours}</p>
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-4 rounded-xl bg-white/80 p-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-coal-400">Policy preview</p>
+            <p className="mt-2 text-2xl font-black text-coal-900">{formatCurrency(premium.adjustedPremium)}</p>
+            <p className="text-sm text-coal-500">per week for {selectedPlan.name} protection</p>
+            <p className="mt-2 text-xs text-coal-500">
+              Trigger-based income loss cover only. Health, life, accidents, and vehicle repairs are excluded.
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="grid sm:grid-cols-2 gap-3">
@@ -85,7 +186,7 @@ export default function StepCoverage({ formData, updateField, onActivate, isLoad
       </div>
 
       <div className="rounded-xl bg-signal-50 border border-signal-100 px-4 py-3 text-xs text-coal-600">
-        ⚡ GigShield uses these signals to determine when automatic payouts may be triggered.
+        ⚡ GigShield uses these signals plus your rider persona, city, and work pattern to determine weekly pricing and automatic payouts.
       </div>
 
       <button

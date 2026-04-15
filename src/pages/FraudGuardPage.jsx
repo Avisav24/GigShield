@@ -11,6 +11,25 @@ const fraudSignals = [
   { icon: <TrendingDown className="w-5 h-5" />, name: { en: "Payout safety lock", hi: "पेआउट सुरक्षा लॉक" }, detail: { en: "Suspicious payout attempts are blocked with clear reason messages.", hi: "संदिग्ध भुगतान प्रयासों को स्पष्ट कारण संदेशों के साथ रोका जाता है।" } },
 ];
 
+const controlMatrix = [
+  {
+    title: { en: "Anomaly detection", hi: "अनियमितता पहचान" },
+    detail: { en: "Risk scoring flags sudden trigger spikes, abnormal request patterns, and suspicious claim velocity.", hi: "रिस्क स्कोरिंग अचानक ट्रिगर स्पाइक और संदिग्ध पैटर्न को फ्लैग करती है।" },
+  },
+  {
+    title: { en: "Location validation", hi: "लोकेशन सत्यापन" },
+    detail: { en: "Live geolocation is checked against the worker's expected city zone before payout release.", hi: "भुगतान से पहले लाइव लोकेशन को अपेक्षित शहर क्षेत्र से मिलाया जाता है।" },
+  },
+  {
+    title: { en: "Activity validation", hi: "गतिविधि सत्यापन" },
+    detail: { en: "Delivery activity context and persona behavior are reviewed so only genuine worker sessions pass automatically.", hi: "सिर्फ असली वर्कर सत्रों को पास करने के लिए गतिविधि संदर्भ की समीक्षा की जाती है।" },
+  },
+  {
+    title: { en: "Duplicate claim prevention", hi: "डुप्लिकेट क्लेम रोकथाम" },
+    detail: { en: "Cooldown and de-duplication rules stop repeated claims for the same disruption event.", hi: "कूलडाउन और डी-डुप्लिकेशन नियम एक ही व्यवधान के लिए दोहराए गए क्लेम रोकते हैं।" },
+  },
+];
+
 const guardSteps = [
   { step: { en: "Step 1", hi: "चरण 1" }, title: { en: "Monitor activity and triggers", hi: "गतिविधि और ट्रिगर की निगरानी" }, detail: { en: "System reads behavior patterns and event context continuously.", hi: "सिस्टम व्यवहार पैटर्न और घटना संदर्भ को लगातार पढ़ता है।" } },
   { step: { en: "Step 2", hi: "चरण 2" }, title: { en: "Calculate risk level", hi: "जोखिम स्तर की गणना" }, detail: { en: "Score maps to Low, Medium, or High risk state.", hi: "स्कोर निम्न, मध्यम, या उच्च जोखिम अवस्था निर्धारित करता है।" } },
@@ -78,6 +97,18 @@ function FraudGuardPage() {
               <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">{selectLabel(languageMode, item.step.en, item.step.hi)}</p>
               <h3 className="text-base font-bold text-gray-900">{selectLabel(languageMode, item.title.en, item.title.hi)}</h3>
               <p className="mt-2 text-sm text-gray-600 leading-relaxed">{selectLabel(languageMode, item.detail.en, item.detail.hi)}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="px-6 sm:px-12 lg:px-24 pb-20 max-w-6xl mx-auto">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-8">{selectLabel(languageMode, "Fraud Control Matrix", "फ्रॉड नियंत्रण मैट्रिक्स")}</p>
+        <div className="grid sm:grid-cols-2 gap-6">
+          {controlMatrix.map((item) => (
+            <div key={item.title.en} className="rounded-2xl border border-white/60 bg-white/60 p-6 shadow-sm">
+              <h3 className="text-base font-bold text-gray-900">{selectLabel(languageMode, item.title.en, item.title.hi)}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">{selectLabel(languageMode, item.detail.en, item.detail.hi)}</p>
             </div>
           ))}
         </div>

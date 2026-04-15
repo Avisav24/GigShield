@@ -13,23 +13,32 @@ const situations = [
 
 const features = [
   { icon: <Zap className="w-5 h-5" />, title: { en: "Automatic Trigger Payouts", hi: "स्वचालित ट्रिगर भुगतान" }, detail: { en: "No manual claim process. If trigger conditions match, payout is calculated instantly.", hi: "कोई मैन्युअल क्लेम प्रक्रिया नहीं।" } },
-  { icon: <ShieldCheck className="w-5 h-5" />, title: { en: "Plan-Based Protection", hi: "योजना-आधारित सुरक्षा" }, detail: { en: "Basic, Standard, and Pro plans define payout amount, coverage window, and daily cap.", hi: "बेसिक, स्टैंडर्ड, और प्रो योजनाएं भुगतान और कवरेज तय करती हैं।" } },
+  { icon: <ShieldCheck className="w-5 h-5" />, title: { en: "Weekly Protection Plans", hi: "साप्ताहिक सुरक्षा योजनाएं" }, detail: { en: "Basic, Standard, and Pro plans define weekly price, payout amount, coverage window, and daily cap.", hi: "बेसिक, स्टैंडर्ड, और प्रो योजनाएं साप्ताहिक कीमत, भुगतान और कवरेज तय करती हैं।" } },
   { icon: <Eye className="w-5 h-5" />, title: { en: "Fraud Guard Layer", hi: "धोखाधड़ी सुरक्षा परत" }, detail: { en: "Risk scoring detects suspicious behavior and can require verification before payout.", hi: "जोखिम स्कोरिंग संदिग्ध व्यवहार का पता लगाता है।" } },
   { icon: <ScanFace className="w-5 h-5" />, title: { en: "Selfie Verification Gate", hi: "सेल्फी सत्यापन द्वार" }, detail: { en: "High-risk sessions are verified through a random selfie gesture challenge.", hi: "उच्च-जोखिम सत्रों के लिए सेल्फी सत्यापन।" } },
   { icon: <LayoutDashboard className="w-5 h-5" />, title: { en: "Transparent Dashboard", hi: "पारदर्शी डैशबोर्ड" }, detail: { en: "Workers can see payouts, active plan, risk state, and premium history in one place.", hi: "सभी जानकारी एक ही जगह।" } },
-  { icon: <ArrowRight className="w-5 h-5" />, title: { en: "Fast Demo-to-Real Flow", hi: "तेज़ डेमो प्रवाह" }, detail: { en: "The same dashboard flow demonstrates practical worker protection end to end.", hi: "यही डैशबोर्ड अंत से अंत तक सुरक्षा निर्णय दिखाता है।" } },
+  { icon: <ArrowRight className="w-5 h-5" />, title: { en: "Income-Only Scope", hi: "केवल आय सुरक्षा" }, detail: { en: "Coverage is limited to loss of gig income from disruptions, not health, life, accidents, or vehicle repairs.", hi: "कवरेज केवल आय हानि के लिए है, स्वास्थ्य, जीवन, दुर्घटना या वाहन मरम्मत के लिए नहीं।" } },
 ];
 
 const steps = [
-  { en: "Choose your plan", hi: "अपनी योजना चुनें", desc: { en: "Select Basic, Standard, or Pro based on your work hours and risk needs.", hi: "काम के घंटों और जोखिम के आधार पर चुनें।" } },
-  { en: "Keep coverage active", hi: "कवरेज सक्रिय रखें", desc: { en: "When coverage is active, trigger events are evaluated for payout eligibility.", hi: "सक्रिय रहने पर ट्रिगर इवेंट मूल्यांकित होते हैं।" } },
+  { en: "Choose your weekly plan", hi: "अपनी साप्ताहिक योजना चुनें", desc: { en: "Select Basic, Standard, or Pro based on your work hours and disruption risk.", hi: "काम के घंटों और व्यवधान जोखिम के आधार पर चुनें।" } },
+  { en: "Keep weekly coverage active", hi: "साप्ताहिक कवरेज सक्रिय रखें", desc: { en: "When your weekly cover is active, trigger events are evaluated for payout eligibility.", hi: "साप्ताहिक कवरेज सक्रिय रहने पर ट्रिगर इवेंट मूल्यांकित होते हैं।" } },
   { en: "Trigger event occurs", hi: "ट्रिगर इवेंट होता है", desc: { en: "Rain, heat, AQI, or outage triggers are checked against your plan and daily cap.", hi: "बारिश, गर्मी, AQI या आउटेज की जाँच की जाती है।" } },
   { en: "Receive payout", hi: "भुगतान प्राप्त करें", desc: { en: "If rules match, payout is applied instantly. High-risk sessions may need selfie check.", hi: "नियम मिलते ही भुगतान तुरंत होता है।" } },
 ];
 
+const solutionChecklist = [
+  { title: "Optimized onboarding", detail: "Persona-based rider onboarding with city, work pattern, platform, rider proof, selected triggers, and weekly plan setup." },
+  { title: "AI risk profiling", detail: "Dynamic disruption risk score based on rider persona, city conditions, trigger mix, and platform dependency." },
+  { title: "Weekly policy creation", detail: "Basic, Standard, and Pro protection plans are priced weekly to match gig worker earning cycles." },
+  { title: "Parametric claim automation", detail: "Weather, AQI, social disruption, and platform-outage signals trigger automatic loss-of-income payouts." },
+  { title: "Fraud detection", detail: "Anomaly checks, activity validation, location checks, selfie verification, and duplicate-claim prevention guard payouts." },
+  { title: "Analytics dashboard", detail: "Weekly support left, trigger confidence, payout history, predictive alerts, and trust metrics are shown in one workspace." },
+];
+
 function ProductPage() {
   const navigate = useNavigate();
-  const { languageMode, setLanguageMode } = useSiteLanguage();
+  const { languageMode } = useSiteLanguage();
 
   return (
     <div className="min-h-screen bg-[#f4f5f7] font-sans">
@@ -43,13 +52,40 @@ function ProductPage() {
           <span className="text-gray-400">{selectLabel(languageMode, "for delivery workers.", "काम करता है।")}</span>
         </h1>
         <p className="mt-6 text-lg text-gray-600 max-w-2xl leading-relaxed">
-          {selectLabel(languageMode, "GigShield protects gig worker earnings when real-world events interrupt delivery flow. It watches verified triggers and releases support payouts quickly.", "GigShield गिग वर्कर्स की कमाई की सुरक्षा करता है जब घटनाएं डिलीवरी को प्रभावित करती हैं।")}
+          {selectLabel(languageMode, "GigShield protects gig worker earnings when real-world events interrupt delivery flow. It watches verified triggers and releases weekly-priced support payouts quickly.", "GigShield गिग वर्कर्स की कमाई की सुरक्षा करता है जब घटनाएं डिलीवरी को प्रभावित करती हैं और साप्ताहिक योजनाओं के तहत जल्दी भुगतान जारी करता है।")}
         </p>
         <div className="mt-8 flex gap-3 flex-wrap">
           <button onClick={() => navigate("/signin")} className="primary-btn gap-2 flex items-center">
             {selectLabel(languageMode, "Get Protected", "सुरक्षा शुरू करें")}<ArrowRight className="w-4 h-4" />
           </button>
           <button onClick={() => navigate("/pricing")} className="secondary-btn">{selectLabel(languageMode, "View Pricing", "कीमत देखें")}</button>
+        </div>
+      </section>
+
+      <section className="px-6 sm:px-12 lg:px-24 pb-20 max-w-6xl mx-auto">
+        <div className="rounded-3xl border border-amber-200 bg-amber-50/80 px-6 py-6">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-700 mb-3">
+            {selectLabel(languageMode, "Coverage Boundary", "कवरेज सीमा")}
+          </p>
+          <p className="text-sm font-medium leading-relaxed text-amber-950">
+            {selectLabel(
+              languageMode,
+              "GigShield only covers loss of delivery income from verified external disruptions. It does not cover health, life, accidents, or vehicle repair costs.",
+              "GigShield केवल सत्यापित बाहरी व्यवधानों से हुई डिलीवरी आय हानि को कवर करता है। यह स्वास्थ्य, जीवन, दुर्घटना या वाहन मरम्मत लागत को कवर नहीं करता।",
+            )}
+          </p>
+        </div>
+      </section>
+
+      <section className="px-6 sm:px-12 lg:px-24 pb-20 max-w-6xl mx-auto">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-8">{selectLabel(languageMode, "Deliverable Coverage", "डिलिवरेबल कवरेज")}</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          {solutionChecklist.map((item) => (
+            <div key={item.title} className="rounded-2xl border border-white/60 bg-white/60 p-5 shadow-sm">
+              <h3 className="text-base font-bold text-gray-900">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-gray-600">{item.detail}</p>
+            </div>
+          ))}
         </div>
       </section>
 

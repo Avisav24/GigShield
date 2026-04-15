@@ -1,7 +1,12 @@
 import { useNavigate } from "react-router-dom";
+import planDetails from "../../data/planDetails.json";
+import { formatCurrency } from "../../utils/format";
+import { getPersonaRiskProfile } from "../../utils/onboardingProfile";
 
 export default function StepSuccess({ formData }) {
   const navigate = useNavigate();
+  const profile = getPersonaRiskProfile(formData);
+  const selectedPlan = planDetails.find((plan) => plan.id === formData.selectedPlanId) ?? planDetails[1];
   const triggerLabels = {
     heavy_rain: "Heavy Rain 🌧️",
     heatwave: "Heatwave 🌡️",
@@ -42,6 +47,20 @@ export default function StepSuccess({ formData }) {
           </div>
         </div>
         <div className="border-t border-coal-200 pt-3">
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div>
+              <p className="kicker">Weekly Plan</p>
+              <p className="mt-0.5 font-semibold text-coal-900 text-sm">{selectedPlan.name}</p>
+            </div>
+            <div className="text-right">
+              <p className="kicker">AI Risk</p>
+              <p className="mt-0.5 font-semibold text-coal-900 text-sm">{profile.riskLevel} ({profile.score}/100)</p>
+            </div>
+          </div>
+          <div className="mb-3 rounded-xl bg-coal-50 px-3 py-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-coal-400">Weekly Price</p>
+            <p className="mt-1 text-sm font-semibold text-coal-900">{formatCurrency(selectedPlan.weeklyPremium)} base weekly price</p>
+          </div>
           <p className="kicker mb-2">Active Triggers</p>
           <div className="flex flex-wrap gap-2">
             {(formData.coverageTriggers || []).map((t) => (

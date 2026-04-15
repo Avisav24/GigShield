@@ -16,7 +16,7 @@ export default function StepPlatform({ formData, updateField, onNext }) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <p className="kicker mb-1">Step 4 of 7</p>
+        <p className="kicker mb-1">Step 2 of 4</p>
         <h2 className="hero-title text-3xl sm:text-4xl leading-tight">Confirm your delivery platform</h2>
         <p className="mt-2 text-coal-500 text-sm">This helps us activate your rider protection</p>
       </div>

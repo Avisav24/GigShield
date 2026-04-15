@@ -1,7 +1,7 @@
-import { useCallback, useRef, useState } from "react";
-import { supabase } from "../utils/supabase";
+import { useCallback, useState } from "react";
 
 export const TOTAL_STEPS = 5;
+const selectedPlanStorageKey = "gigshieldSelectedPlanId";
 
 export function useVerificationFlow() {
   const [step, setStep] = useState(1);
@@ -12,12 +12,15 @@ export function useVerificationFlow() {
     fullName: "",
     city: "",
     age: "",
+    workPattern: "peak_hours",
+    weeklyEarningsBand: "6000_10000",
     platform: "",
     riderId: "",
     vehicleType: "",
     riderProof: null,
     riderProofPreview: null,
     coverageTriggers: [],
+    selectedPlanId: "standard",
   });
 
   const updateField = useCallback((field, value) => {
@@ -37,9 +40,12 @@ export function useVerificationFlow() {
   const completeFlow = useCallback(async () => {
     setIsLoading(true);
     await new Promise((r) => setTimeout(r, 1500));
+    if (formData.selectedPlanId) {
+      localStorage.setItem(selectedPlanStorageKey, formData.selectedPlanId);
+    }
     setIsLoading(false);
     setStep(5);
-  }, []);
+  }, [formData.selectedPlanId]);
 
   return {
     step,

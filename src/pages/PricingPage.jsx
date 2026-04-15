@@ -23,7 +23,7 @@ const planHighlights = {
     { en: "24x7 trigger coverage", hi: "24x7 ट्रिगर कवरेज" },
     { en: "Daily payout cap: ₹1,000", hi: "दैनिक भुगतान सीमा: ₹1,000" },
     { en: "Fast-track verification", hi: "फास्ट-ट्रैक सत्यापन" },
-    { en: "Dedicated claims concierge", hi: "समर्पित क्लेम सहायता" },
+    { en: "Priority payout support", hi: "प्राथमिक भुगतान सहायता" },
   ],
 };
 
@@ -31,6 +31,7 @@ const faqs = [
   { q: { en: "What billing cycle is used?", hi: "बिलिंग चक्र क्या है?" }, a: { en: "Weekly, auto-renewable. Cancel anytime.", hi: "साप्ताहिक, स्वतः नवीनीकरण। कभी भी रद्द करें।" } },
   { q: { en: "What triggers are covered?", hi: "कौन से ट्रिगर कवर हैं?" }, a: { en: "Rain, heatwave, AQI spike, and platform outages.", hi: "बारिश, भीषण गर्मी, AQI और प्लेटफ़ॉर्म आउटेज।" } },
   { q: { en: "How fast is a payout?", hi: "भुगतान कितना जल्दी होता है?" }, a: { en: "Instant after trigger verification completes.", hi: "ट्रिगर सत्यापन के बाद तुरंत।" } },
+  { q: { en: "What is not covered?", hi: "क्या कवर नहीं है?" }, a: { en: "Health, life, accidents, and vehicle repairs are strictly excluded.", hi: "स्वास्थ्य, जीवन, दुर्घटना और वाहन मरम्मत सख्ती से बाहर हैं।" } },
   { q: { en: "Which platforms are supported?", hi: "कौन से प्लेटफॉर्म समर्थित हैं?" }, a: { en: "Zomato, Swiggy, Blinkit, Zepto.", hi: "Zomato, Swiggy, Blinkit, Zepto।" } },
 ];
 
@@ -52,7 +53,7 @@ function PricingPage() {
           <span className="text-gray-400">{selectLabel(languageMode, "protection level.", "सुरक्षा योजना।")}</span>
         </h1>
         <p className="mt-6 text-lg text-gray-600 max-w-2xl leading-relaxed">
-          {selectLabel(languageMode, "Every plan includes parametric payouts for major disruptions. Scale coverage based on work hours and risk appetite.", "हर योजना में बड़े व्यवधानों के लिए भुगतान शामिल है।")}
+          {selectLabel(languageMode, "Every plan includes weekly-priced parametric payouts for major disruptions. Scale coverage based on work hours and risk appetite.", "हर योजना में बड़े व्यवधानों के लिए साप्ताहिक पैरामेट्रिक भुगतान शामिल है।")}
         </p>
       </section>
 
@@ -77,6 +78,21 @@ function PricingPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="px-6 sm:px-12 lg:px-24 pb-12 max-w-6xl mx-auto">
+        <div className="rounded-3xl border border-gray-200 bg-white/70 p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-gray-500 mb-3">
+            {selectLabel(languageMode, "Why Weekly Pricing", "साप्ताहिक कीमत क्यों")}
+          </p>
+          <p className="text-sm text-gray-700 leading-relaxed">
+            {selectLabel(
+              languageMode,
+              "Gig workers usually manage cash flow weekly, so GigShield prices cover on the same weekly rhythm as their earning and withdrawal cycle.",
+              "गिग वर्कर्स आमतौर पर अपनी नकदी प्रवाह साप्ताहिक आधार पर संभालते हैं, इसलिए GigShield की कीमत भी उनकी कमाई और निकासी चक्र के उसी साप्ताहिक रिदम पर रखी गई है।",
+            )}
+          </p>
         </div>
       </section>
 
