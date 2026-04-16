@@ -71,7 +71,7 @@ function GetProtected() {
         <div className="absolute left-[-6%] top-[8%] h-[24rem] w-[24rem] rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-6xl py-12 sm:py-20">
+      <div className="w-full py-12 sm:py-20">
         <header className="mb-12">
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300">
             Secure Your Income

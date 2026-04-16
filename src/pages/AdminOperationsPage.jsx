@@ -193,7 +193,7 @@ function AdminOperationsPage() {
       backLabel={selectLabel(languageMode, "Dashboard", "डैशबोर्ड")}
       actions={<LanguageToggle languageMode={languageMode} setLanguageMode={setLanguageMode} />}
     >
-      <div className="mx-auto max-w-[1400px] px-0 py-4">
+      <div className="w-full px-0 py-4">
         <header className="mb-10">
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">{selectLabel(languageMode, "Operations Console", "ऑपरेशन्स कंसोल")}</p>
           <h1 className="mb-6 text-4xl font-black leading-none tracking-tighter text-white sm:text-5xl">

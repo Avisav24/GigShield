@@ -21,7 +21,7 @@ function PayoutReceivedPage() {
       backLabel={selectLabel(languageMode, "Dashboard", "डैशबोर्ड")}
       actions={<LanguageToggle languageMode={languageMode} setLanguageMode={setLanguageMode} />}
     >
-      <div className="mx-auto max-w-2xl px-0 py-4 text-center sm:py-10">
+      <div className="w-full px-0 py-4 text-center sm:py-10">
         {!receipt || !receipt.receivedAt ? (
            <div className="space-y-6">
              <h1 className="text-4xl font-black tracking-tighter text-white">No Payment Found</h1>

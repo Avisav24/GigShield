@@ -19,7 +19,7 @@ export function AuthPageShell({
         <div className="absolute right-[-8%] bottom-[10%] h-[22rem] w-[22rem] rounded-full bg-emerald-400/10 blur-3xl" />
       </div>
 
-      <div className="mx-auto grid min-h-screen max-w-7xl items-center gap-10 px-6 py-28 lg:grid-cols-[0.9fr_1.1fr] lg:px-10">
+      <div className="grid min-h-screen w-full items-center gap-10 px-4 py-28 sm:px-6 lg:grid-cols-[0.9fr_1.1fr] lg:px-10 xl:px-14">
         <aside className="hidden lg:block">
           <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-cyan-300">
             {eyebrow}

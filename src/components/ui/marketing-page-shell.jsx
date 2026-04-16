@@ -24,7 +24,7 @@ export function MarketingPageShell({
         <div className="absolute right-[-12%] top-[18%] h-[26rem] w-[26rem] rounded-full bg-emerald-400/10 blur-3xl" />
       </div>
 
-      <section className="mx-auto max-w-7xl px-6 pb-14 pt-28 md:pt-36 lg:px-10">
+      <section className="w-full px-4 pb-14 pt-28 sm:px-6 md:pt-36 lg:px-10 xl:px-14">
         <div className="grid gap-14 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-cyan-300">
@@ -71,7 +71,7 @@ export function MarketingPageShell({
         </div>
       </section>
 
-      <div className="mx-auto max-w-7xl px-6 pb-20 lg:px-10">{children}</div>
+      <div className="w-full px-4 pb-20 sm:px-6 lg:px-10 xl:px-14">{children}</div>
     </main>
   );
 }

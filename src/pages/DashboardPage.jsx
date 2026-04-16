@@ -427,7 +427,7 @@ export default function DashboardPage() {
         <div className="absolute left-[-8%] top-[5%] h-[26rem] w-[26rem] rounded-full bg-cyan-400/10 blur-3xl" />
         <div className="absolute right-[-10%] top-[24%] h-[24rem] w-[24rem] rounded-full bg-emerald-400/10 blur-3xl" />
       </div>
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 pb-6 pt-32 sm:pb-10 sm:pt-36">
+      <div className="w-full px-4 pb-6 pt-32 sm:px-6 sm:pb-10 sm:pt-36 lg:px-10 xl:px-14">
         <header className="mb-12">
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">{selectLabel(languageMode, "Income Protection Dashboard", "आय सुरक्षा डैशबोर्ड")}</p>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
@@ -488,6 +488,44 @@ export default function DashboardPage() {
           </div>
         </header>
 
+        <section className="mb-10">
+          <AppSurface className="border-cyan-300/20 bg-cyan-300/10">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200">
+                  {selectLabel(languageMode, "Judge Demo Step 3", "जज डेमो स्टेप 3")}
+                </p>
+                <p className="mt-3 text-lg font-bold text-white">
+                  {selectLabel(languageMode, "This is the live product workspace.", "यह लाइव प्रोडक्ट वर्कस्पेस है।")}
+                </p>
+                <p className="mt-2 max-w-3xl text-sm leading-7 text-cyan-50/90">
+                  {selectLabel(
+                    languageMode,
+                    "Show Income Radar first, then trigger a disruption below to demonstrate how GigShield moves from prediction to automated income protection.",
+                    "पहले इनकम रडार दिखाएं, फिर नीचे कोई ट्रिगर चलाकर बताएं कि GigShield प्रेडिक्शन से ऑटोमेटेड आय सुरक्षा तक कैसे जाता है।",
+                  )}
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={() => navigate("/income-radar")}
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] px-4 text-[11px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-white/[0.14]"
+                >
+                  {selectLabel(languageMode, "Reopen Income Radar", "इनकम रडार खोलें")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/payout")}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-950 transition hover:bg-zinc-200"
+                >
+                  {selectLabel(languageMode, "Go To Payout Flow", "पेआउट फ्लो खोलें")}
+                </button>
+              </div>
+            </div>
+          </AppSurface>
+        </section>
+
         <section className="mb-10 sm:mb-12 grid gap-3 sm:gap-4 md:grid-cols-3">
           <article className="rounded-3xl border border-white/10 bg-white/[0.04] p-4 shadow-xl shadow-black/20 backdrop-blur-xl sm:p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
@@ -521,7 +559,7 @@ export default function DashboardPage() {
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{selectLabel(languageMode, "Where You Work", "जहां आप काम करते हैं")}</p>
             <p className="text-xs font-bold text-zinc-500">{selectedPlatforms.length} {selectLabel(languageMode, "Apps connected", "ऐप्स जुड़े")}</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {availablePlatforms.map((p) => {
               const isActive = selectedPlatforms.includes(p);
               return (

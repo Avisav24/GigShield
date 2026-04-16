@@ -16,7 +16,7 @@ export function AppPageShell({
         <div className="absolute left-[-8%] top-[5%] h-[26rem] w-[26rem] rounded-full bg-cyan-400/10 blur-3xl" />
       </div>
 
-      <div className="mx-auto max-w-7xl px-6 pb-10 pt-28 lg:px-10">
+      <div className="w-full px-4 pb-10 pt-28 sm:px-6 lg:px-10 xl:px-14">
         {(title || description) ? (
           <header className="mb-10">
             {title ? (

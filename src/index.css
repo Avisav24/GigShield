@@ -33,6 +33,16 @@ body {
   isolation: isolate;
 }
 
+.spline-transparent,
+.spline-transparent canvas {
+  background: transparent !important;
+}
+
+.hero-spline-mask {
+  -webkit-mask-image: radial-gradient(circle at 55% 50%, rgba(0, 0, 0, 1) 34%, rgba(0, 0, 0, 0.98) 48%, rgba(0, 0, 0, 0.78) 64%, transparent 84%);
+  mask-image: radial-gradient(circle at 55% 50%, rgba(0, 0, 0, 1) 34%, rgba(0, 0, 0, 0.98) 48%, rgba(0, 0, 0, 0.78) 64%, transparent 84%);
+}
+
 html {
   scroll-behavior: smooth;
 }

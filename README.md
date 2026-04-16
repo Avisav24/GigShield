@@ -93,6 +93,22 @@ Relevant implementation:
 - [src/utils/incomeRadar.js](/Users/suraj/Desktop/GigShield/src/utils/incomeRadar.js)
 - [src/components/IncomeRadarPanel.jsx](/Users/suraj/Desktop/GigShield/src/components/IncomeRadarPanel.jsx)
 - [src/pages/DashboardPage.jsx](/Users/suraj/Desktop/GigShield/src/pages/DashboardPage.jsx)
+- [src/pages/IncomeRadarPage.jsx](/Users/suraj/Desktop/GigShield/src/pages/IncomeRadarPage.jsx)
+
+## Best Demo Route
+
+If someone is seeing the project for the first time, the fastest route is:
+
+1. open the landing page
+2. click `Start 60-sec Demo`
+3. open `Income Radar`
+4. move to the live dashboard
+5. simulate the payout flow
+6. close on the admin view
+
+The guided demo entry point is:
+
+- [src/pages/JudgeDemoPage.jsx](/Users/suraj/Desktop/GigShield/src/pages/JudgeDemoPage.jsx)
 
 ## Problem Statement
 

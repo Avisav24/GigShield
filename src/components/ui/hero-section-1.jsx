@@ -47,17 +47,11 @@ export function HeroSection() {
             className="-top-40 left-0 md:left-52 md:-top-28"
             fill="#7dd3fc"
           />
-          <div className="absolute inset-0 z-0">
-            <SplineScene
-              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-              className="h-full w-full"
-            />
-          </div>
-          <div className="absolute inset-0 z-[1] bg-[radial-gradient(circle_at_center,rgba(10,15,22,0.18)_0%,rgba(3,6,10,0.58)_42%,rgba(2,4,8,0.88)_100%)]" />
-          <div className="absolute inset-0 z-[2] bg-[linear-gradient(90deg,rgba(2,6,12,0.92)_0%,rgba(2,6,12,0.76)_34%,rgba(2,6,12,0.42)_58%,rgba(2,6,12,0.65)_100%)]" />
+          <div className="pointer-events-none absolute inset-0 z-[1] bg-[radial-gradient(circle_at_center,rgba(10,15,22,0.12)_0%,rgba(3,6,10,0.38)_42%,rgba(2,4,8,0.74)_100%)]" />
+          <div className="pointer-events-none absolute inset-0 z-[2] bg-[linear-gradient(90deg,rgba(2,6,12,0.78)_0%,rgba(2,6,12,0.48)_22%,rgba(2,6,12,0.2)_44%,rgba(2,6,12,0.72)_68%,rgba(2,6,12,0.94)_100%)]" />
 
-          <div className="relative z-10 mx-auto flex min-h-[100svh] max-w-7xl items-center px-6 pb-16 pt-32 md:pt-36 lg:px-10 lg:pb-24">
-            <div className="max-w-3xl text-center lg:text-left">
+          <div className="relative z-10 grid min-h-[100svh] w-full items-center gap-8 px-4 pb-24 pt-28 sm:px-6 md:pt-32 lg:grid-cols-[0.95fr_1.05fr] lg:px-10 xl:px-14">
+            <div className="order-1 max-w-3xl text-center lg:text-left">
               <Link
                 to="/triggers"
                 className="group mx-auto flex w-fit items-center gap-4 rounded-full border border-white/10 bg-white/5 p-1 pl-4 shadow-md shadow-black/20 backdrop-blur-lg transition-all duration-300 hover:border-cyan-300/25 hover:bg-white/10 lg:mx-0"
@@ -102,62 +96,46 @@ export function HeroSection() {
                   variant="ghost"
                   className="h-11 rounded-xl border border-white/10 bg-white/5 px-5 text-white hover:bg-white/10"
                 >
+                  <Link to="/judge-demo">
+                    <span className="text-nowrap">Start 60-sec Demo</span>
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="ghost"
+                  className="h-11 rounded-xl border border-white/10 bg-white/5 px-5 text-white hover:bg-white/10"
+                >
+                  <Link to="/income-radar">
+                    <span className="text-nowrap">Open Income Radar</span>
+                  </Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="ghost"
+                  className="h-11 rounded-xl border border-white/10 bg-white/5 px-5 text-white hover:bg-white/10"
+                >
                   <Link to="/dashboard">
                     <span className="text-nowrap">View Live Demo</span>
                   </Link>
                 </Button>
               </div>
+            </div>
 
-              <div className="mt-10 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/8 p-4 backdrop-blur-lg sm:col-span-3">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-200">
-                    What GigShield Is
-                  </p>
-                  <p className="mt-3 text-base font-semibold leading-7 text-white">
-                    GigShield is a weekly income protection product for delivery workers.
-                    If rain, AQI, or platform disruption reduces working hours, GigShield
-                    helps protect lost earnings automatically.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-300">
-                    Weekly Pricing
-                  </p>
-                  <p className="mt-3 text-3xl font-black tracking-tight text-white">
-                    ₹79 to ₹179
-                  </p>
-                  <p className="mt-2 text-sm text-zinc-300">
-                    Designed around the weekly cash cycle of gig workers, not
-                    monthly insurance billing.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-300">
-                    Coverage Scope
-                  </p>
-                  <p className="mt-3 text-3xl font-black tracking-tight text-white">
-                    Income Loss Only
-                  </p>
-                  <p className="mt-2 text-sm text-zinc-300">
-                    Strictly excludes health, life, accidents, and vehicle repair expenses.
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
-                  <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-amber-300">
-                    Standout Feature
-                  </p>
-                  <p className="mt-3 text-3xl font-black tracking-tight text-white">
-                    Income Radar
-                  </p>
-                  <p className="mt-2 text-sm text-zinc-300">
-                    Hyperlocal shift advice predicts safer earning windows and risky zones before disruption fully hits.
-                  </p>
-                </div>
+            <div className="relative order-2 min-h-[48vh] lg:min-h-[74vh]">
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(103,232,249,0.14),transparent_52%)]" />
+              <div className="hero-spline-mask absolute -inset-x-4 -inset-y-3 z-0 overflow-hidden sm:-inset-x-6 lg:-inset-x-10 lg:-inset-y-6">
+                <SplineScene
+                  scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+                  className="h-full w-full"
+                />
               </div>
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_18%,rgba(2,6,12,0.14)_62%,rgba(2,6,12,0.34)_100%)]" />
             </div>
           </div>
 
-          <div className="absolute bottom-6 left-1/2 z-10 w-[min(92%,72rem)] -translate-x-1/2">
+          <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 w-[min(92%,72rem)] -translate-x-1/2">
             <div className="rounded-[1.5rem] border border-white/10 bg-zinc-950/75 p-5 backdrop-blur-xl">
               <div className="grid gap-4 sm:grid-cols-3">
                 <div>
@@ -199,8 +177,59 @@ export function HeroSection() {
         </div>
       </section>
 
+      <section className="relative z-10 border-t border-white/5 bg-[#070b10] py-12 md:py-14">
+        <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-14">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/8 p-4 backdrop-blur-lg sm:col-span-3">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-200">
+                What GigShield Is
+              </p>
+              <p className="mt-3 text-base font-semibold leading-7 text-white">
+                GigShield is a weekly income protection product for delivery workers.
+                If rain, AQI, or platform disruption reduces working hours, GigShield
+                helps protect lost earnings automatically.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-cyan-300">
+                Weekly Pricing
+              </p>
+              <p className="mt-3 text-3xl font-black tracking-tight text-white">
+                ₹79 to ₹179
+              </p>
+              <p className="mt-2 text-sm text-zinc-300">
+                Designed around the weekly cash cycle of gig workers, not
+                monthly insurance billing.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-emerald-300">
+                Coverage Scope
+              </p>
+              <p className="mt-3 text-3xl font-black tracking-tight text-white">
+                Income Loss Only
+              </p>
+              <p className="mt-2 text-sm text-zinc-300">
+                Strictly excludes health, life, accidents, and vehicle repair expenses.
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-lg">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-amber-300">
+                Standout Feature
+              </p>
+              <p className="mt-3 text-3xl font-black tracking-tight text-white">
+                Income Radar
+              </p>
+              <p className="mt-2 text-sm text-zinc-300">
+                Hyperlocal shift advice predicts safer earning windows and risky zones before disruption fully hits.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="relative z-10 border-t border-white/5 bg-[#06090d] py-16 md:py-20">
-        <div className="mx-auto max-w-6xl px-6">
+        <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-14">
           <div className="mb-8 text-center">
             <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-cyan-200">
               Particle Signal Layer
@@ -221,7 +250,7 @@ export function HeroSection() {
       </section>
 
       <section className="relative z-10 border-t border-white/5 bg-black/30 py-16 md:py-20">
-        <div className="mx-auto max-w-6xl px-6">
+        <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-14">
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="rounded-[2rem] border border-white/10 bg-white/[0.04] p-6 backdrop-blur-xl">
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-cyan-200">
@@ -334,7 +363,7 @@ export function HeroSection() {
       </section>
 
       <section className="relative z-10 border-t border-white/5 bg-zinc-950/60 py-16 md:py-20">
-        <div className="mx-auto max-w-6xl px-6">
+        <div className="w-full px-4 sm:px-6 lg:px-10 xl:px-14">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-[0.3em] text-zinc-500">

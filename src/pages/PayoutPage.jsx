@@ -375,7 +375,38 @@ function PayoutPage() {
       )}
       actions={<LanguageToggle languageMode={languageMode} setLanguageMode={setLanguageMode} />}
     >
-      <div className="mx-auto max-w-2xl">
+      <div className="w-full">
+        <AppSurface className="mb-8 border-cyan-300/20 bg-cyan-300/10 p-4 sm:p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200">
+                {selectLabel(languageMode, "Judge Demo Step 4", "जज डेमो स्टेप 4")}
+              </p>
+              <p className="mt-2 text-sm leading-7 text-cyan-50/90">
+                {selectLabel(
+                  languageMode,
+                  "Use this page to show that once the trigger and verification rules are satisfied, GigShield can move a worker from validation to settled support without claim paperwork.",
+                  "इस पेज से दिखाएं कि ट्रिगर और वेरिफिकेशन नियम पूरे होने के बाद GigShield बिना क्लेम पेपरवर्क के सेटल्ड सपोर्ट तक पहुंच सकता है।",
+                )}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/judge-demo"
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] px-4 text-[11px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-white/[0.14]"
+              >
+                {selectLabel(languageMode, "Demo Story", "डेमो स्टोरी")}
+              </Link>
+              <Link
+                to="/admin-ops"
+                className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-[11px] font-black uppercase tracking-[0.2em] text-zinc-950 transition hover:bg-zinc-200"
+              >
+                {selectLabel(languageMode, "Next: Admin View", "अगला: एडमिन व्यू")}
+              </Link>
+            </div>
+          </div>
+        </AppSurface>
+
         <header className="mb-8 sm:mb-12">
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">
             {selectLabel(languageMode, "Settlement Console", "सेटलमेंट कंसोल")}
@@ -437,6 +468,12 @@ function PayoutPage() {
                   className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-[11px] font-black uppercase tracking-[0.25em] text-zinc-950 transition hover:bg-zinc-200"
                 >
                   {selectLabel(languageMode, "Open Dashboard", "डैशबोर्ड खोलें")}
+                </Link>
+                <Link
+                  to="/judge-demo"
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-4 text-[11px] font-black uppercase tracking-[0.25em] text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.06]"
+                >
+                  {selectLabel(languageMode, "Open Demo Story", "डेमो स्टोरी खोलें")}
                 </Link>
               </div>
             </AppSurface>

@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import Marquee from "react-fast-marquee";
 import { ArrowRight, Menu, X } from "lucide-react";
 import LanguageToggle from "./LanguageToggle";
 import { selectLabel } from "../utils/i18n";
@@ -11,25 +10,22 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { languageMode, setLanguageMode } = useSiteLanguage();
-  const isHomePage = location.pathname === "/";
   const [user, setUser] = useState(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const navItems = [
-    { label: "Home", path: "/" },
     { label: "Product", path: "/product" },
+    { label: "Income Radar", path: "/income-radar" },
     { label: "Pricing", path: "/pricing" },
-    { label: "Triggers", path: "/triggers" },
-    { label: "Fraud Guard", path: "/fraud-guard" },
+    { label: "Protection", path: "/triggers" },
+    { label: "Demo Story", path: "/judge-demo" },
     { label: "Get Protected", path: "/get-protected" },
-    { label: "Live Demo", path: "/dashboard" },
-    { label: "Trust", path: "/trust-center" },
-    { label: "Admin View", path: "/admin-ops" },
   ];
 
   const isNavItemActive = (path) => {
-    if (path === "/dashboard") {
+    if (path === "/judge-demo") {
       return [
+        "/judge-demo",
         "/dashboard",
         "/payout",
         "/payout-received",
@@ -41,8 +37,12 @@ export default function Navbar() {
       ].includes(location.pathname);
     }
 
-    if (path === "/admin-ops") {
-      return ["/admin", "/admin-ops"].includes(location.pathname);
+    if (path === "/triggers") {
+      return ["/triggers", "/fraud-guard", "/trust-center", "/admin", "/admin-ops"].includes(location.pathname);
+    }
+
+    if (path === "/income-radar") {
+      return location.pathname === "/income-radar";
     }
 
     return location.pathname === path;
@@ -63,80 +63,40 @@ export default function Navbar() {
     navigate(path);
   };
 
-  const handleNavClick = (key) => {
-    setMenuOpen(false);
-    if (key === "about") {
-      if (isHomePage) {
-        const element = document.getElementById("about-section");
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        } else {
-          // If not found yet, navigate with hash as fallback
-          navigateTo("/#about-section");
-        }
-      } else {
-        navigateTo("/#about-section");
-      }
-    } else {
-      navigateTo(`/${key}`);
-    }
-  };
-
-  // Handle hash scrolling on page load/navigation
-  useEffect(() => {
-    if (location.hash === "#about-section") {
-      // Small timeout to allow the LandingPage to mount and render
-      const timer = setTimeout(() => {
-        const element = document.getElementById("about-section");
-        if (element) {
-          element.scrollIntoView({ behavior: "smooth" });
-        } else if (!isHomePage) {
-          // If we're not on home but have the hash, something is wrong, redirect
-          navigate("/", { replace: true });
-        }
-      }, 600);
-      return () => clearTimeout(timer);
-    }
-  }, [location.hash, location.pathname, isHomePage, navigate]);
-
   return (
-    <div className="fixed top-0 left-0 right-0 z-[100] w-full flex flex-col">
-      {/* Marquee Top Strip */}
-      <div className="relative z-20 flex w-full items-center overflow-hidden border-b border-white/8 bg-black/55 py-2 shadow-md backdrop-blur-xl">
-        <Marquee
-          speed={40}
-          direction="left"
-          gradient={false}
-          className="text-[11px] font-semibold uppercase tracking-[0.25em] text-cyan-200/80"
-        >
-          {selectLabel(
-            languageMode,
-            "Heavy rain protected this week’s earnings • AQI spike auto-triggered support • Platform outage payout settled instantly • Weekly protection built for gig workers",
-            "भारी बारिश पर इस सप्ताह की कमाई सुरक्षित • AQI बढ़ने पर सहायता शुरू • प्लेटफॉर्म आउटेज पर तुरंत भुगतान • गिग वर्कर्स के लिए साप्ताहिक सुरक्षा",
-          )}
-        </Marquee>
-      </div>
-
-      <nav className="mx-auto mt-2 w-[min(96%,92rem)] flex-none rounded-[1.75rem] border border-white/10 bg-black/25 px-3 py-3 backdrop-blur-xl transition-all duration-300 sm:px-6">
+    <div className="fixed left-0 right-0 top-0 z-[100] w-full">
+      <nav className="mx-3 mt-4 rounded-[1.35rem] border border-white/10 bg-[rgba(7,10,15,0.78)] px-4 py-3 shadow-[0_18px_60px_rgba(0,0,0,0.28)] backdrop-blur-2xl sm:mx-4 sm:px-6 lg:mx-6 xl:mx-8">
         <div className="flex items-center justify-between gap-3">
           <button
-            className="cursor-pointer rounded-full border border-white/10 bg-white/[0.05] px-3 py-1.5 text-lg font-bold tracking-tight text-white sm:text-xl md:text-2xl"
+            className="cursor-pointer rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-base font-black tracking-[0.18em] text-white sm:text-lg"
             onClick={() => navigateTo("/")}
           >
-            GIGSHIELD.
+            GIGSHIELD
           </button>
 
-          <div className="hidden items-center gap-3 lg:flex">
-            <button
-              onClick={() => handleNavClick("about")}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
-                location.hash === "#about-section"
-                  ? "bg-white/[0.08] text-white"
-                  : "text-zinc-300 hover:bg-white/[0.06] hover:text-white"
-              }`}
-            >
-              {selectLabel(languageMode, "About", "बारे में")}
-            </button>
+          <div className="hidden items-center gap-2 lg:flex">
+            <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1">
+              {navItems.map((item) => {
+                const active = isNavItemActive(item.path);
+                const isPrimary = item.path === "/get-protected";
+                return (
+                  <button
+                    key={item.path}
+                    type="button"
+                    onClick={() => navigateTo(item.path)}
+                    className={`whitespace-nowrap rounded-full px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] transition ${
+                      isPrimary
+                        ? "bg-cyan-300 text-zinc-950 shadow-[0_10px_30px_rgba(103,232,249,0.22)] hover:bg-cyan-200"
+                        : active
+                          ? "bg-white/10 text-white"
+                          : "text-zinc-400 hover:bg-white/[0.04] hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
             <LanguageToggle
               languageMode={languageMode}
               setLanguageMode={setLanguageMode}
@@ -156,12 +116,12 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => navigateTo("/signin")}
-                className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg transition-all hover:bg-zinc-200 hover:shadow-xl"
+                className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-zinc-950 shadow-lg transition-all hover:bg-zinc-200 hover:shadow-xl"
               >
                 {selectLabel(
                   languageMode,
-                  "Sign in with Google",
-                  "Google से साइन इन",
+                  "Access",
+                  "डेमो एक्सेस",
                 )}
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -184,49 +144,23 @@ export default function Navbar() {
           </div>
         </div>
 
-        <div className="mt-3 hidden lg:block">
-          <div className="flex items-center gap-2 overflow-x-auto rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-2">
-            {navItems.map((item) => {
-              const active = isNavItemActive(item.path);
-              return (
-                <button
-                  key={item.path}
-                  type="button"
-                  onClick={() => navigateTo(item.path)}
-                  className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-black uppercase tracking-[0.18em] transition ${
-                    active
-                      ? "bg-white text-zinc-950"
-                      : "bg-transparent text-zinc-300 hover:bg-white/[0.08] hover:text-white"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
         {menuOpen ? (
           <div className="mt-3 rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-3 lg:hidden">
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={() => handleNavClick("about")}
-                className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-left text-xs font-black uppercase tracking-[0.18em] text-zinc-100"
-              >
-                About
-              </button>
+            <div className="grid gap-2">
               {navItems.map((item) => {
                 const active = isNavItemActive(item.path);
+                const isPrimary = item.path === "/get-protected";
                 return (
                   <button
                     key={item.path}
                     type="button"
                     onClick={() => navigateTo(item.path)}
                     className={`rounded-2xl border px-4 py-3 text-left text-xs font-black uppercase tracking-[0.18em] transition ${
-                      active
-                        ? "border-white bg-white text-zinc-950"
-                        : "border-white/10 bg-white/[0.03] text-zinc-100"
+                      isPrimary
+                        ? "border-cyan-200 bg-cyan-300 text-zinc-950"
+                        : active
+                          ? "border-white bg-white text-zinc-950"
+                          : "border-white/10 bg-white/[0.03] text-zinc-100"
                     }`}
                   >
                     {item.label}
@@ -252,7 +186,7 @@ export default function Navbar() {
                   onClick={() => navigateTo("/signin")}
                   className="w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-zinc-950"
                 >
-                  {selectLabel(languageMode, "Sign in with Google", "Google से साइन इन")}
+                  {selectLabel(languageMode, "Judge Demo Access", "डेमो एक्सेस")}
                 </button>
               )}
             </div>

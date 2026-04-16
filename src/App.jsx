@@ -15,9 +15,11 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage"));
+const JudgeDemoPage = lazy(() => import("./pages/JudgeDemoPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
+const IncomeRadarPage = lazy(() => import("./pages/IncomeRadarPage"));
 const ProductPage = lazy(() => import("./pages/ProductPage"));
 const TriggerPage = lazy(() => import("./pages/TriggerPage"));
 const FraudGuardPage = lazy(() => import("./pages/FraudGuardPage"));
@@ -140,7 +142,9 @@ function AppShell() {
           >
             <Routes>
               <Route path="/" element={<LandingPage />} />
+              <Route path="/judge-demo" element={<JudgeDemoPage />} />
               <Route path="/product" element={<ProductPage />} />
+              <Route path="/income-radar" element={<IncomeRadarPage />} />
               <Route path="/pricing" element={<PricingPage />} />
               <Route path="/triggers" element={<TriggerPage />} />
               <Route path="/fraud-guard" element={<FraudGuardPage />} />

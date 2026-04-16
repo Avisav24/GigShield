@@ -23,7 +23,7 @@ export default function CommunityHeatmapPage() {
 
   return (
     <AppPageShell badge="Community Heatmap" backTo="/dashboard" backLabel="Dashboard">
-      <div className="mx-auto max-w-[1200px] px-0 py-4">
+      <div className="w-full px-0 py-4">
         <header className="mb-8">
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Live Social Proof</p>
           <h1 className="text-4xl font-black leading-none tracking-tighter text-white sm:text-5xl">City disruption and payout pulse</h1>

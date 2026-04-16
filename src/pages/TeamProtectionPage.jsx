@@ -54,7 +54,7 @@ export default function TeamProtectionPage() {
 
   return (
     <AppPageShell badge="Team Protection" backTo="/dashboard" backLabel="Dashboard">
-      <div className="mx-auto max-w-4xl space-y-6 px-0 py-4">
+      <div className="w-full space-y-6 px-0 py-4">
         <AppSurface className="space-y-4 p-6">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Referral + Team Protection</p>
           <h1 className="text-3xl font-black tracking-tight text-white">Protect together, pay less together</h1>
