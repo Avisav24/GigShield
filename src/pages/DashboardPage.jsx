@@ -590,20 +590,14 @@ export default function DashboardPage() {
   );
 
   const coverageActive = selectedPlatforms.length > 0;
-<<<<<<< HEAD
-  const weeklyPaidAmount = weeklyTrend.reduce((sum, day) => sum + Number(day.paidAmount || 0), 0);
-  const earningsProtectedThisWeek =
-    dashboardMetrics?.supportThisWeek ||
-    weeklyPaidAmount ||
-    userProfile.earningsProtectedThisWeek;
-=======
   const weeklyPaidAmount = weeklyTrend.reduce(
     (sum, day) => sum + Number(day.paidAmount || 0),
     0,
   );
   const earningsProtectedThisWeek =
-    weeklyPaidAmount || userProfile.earningsProtectedThisWeek;
->>>>>>> 47ac2de (Fix Render deployment build flow)
+    dashboardMetrics?.supportThisWeek ||
+    weeklyPaidAmount ||
+    userProfile.earningsProtectedThisWeek;
   const weeklySupportCap = dailyPayoutCap * 7;
   const weeklySupportLeft = Math.max(0, weeklySupportCap - weeklyPaidAmount);
   const emergencyActive = Boolean(latestTrigger);
