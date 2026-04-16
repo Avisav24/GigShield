@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 
 import CookieByteBot from "./CookieByteBot";
+import { getApiUrl } from "../utils/api";
+
 
 // ─── Suggested quick questions ─────────────────────────────────────────────────
 const QUICK_QUESTIONS = [
@@ -94,7 +96,7 @@ export default function ARIAChat({ session, riskLevel }) {
 
     try {
       const allMessages = [...messages, userMsg];
-      const res = await fetch(`/api/chat`, {
+      const res = await fetch(getApiUrl("/api/chat"), {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -149,6 +151,8 @@ export default function ARIAChat({ session, riskLevel }) {
           <div className="relative z-10 h-full w-full pointer-events-none">
             <CookieByteBot />
           </div>
+          {/* Transparent overlay to ensure button click works */}
+          <div className="absolute inset-0 z-20" />
 
           {open && (
             <div className="absolute -top-2 -right-2 z-20 flex h-8 w-8 items-center justify-center rounded-full bg-white border border-zinc-200 shadow-xl">

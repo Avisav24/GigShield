@@ -7,13 +7,14 @@ import { formatCurrency } from "../utils/format";
 import { selectLabel } from "../utils/i18n";
 import { calculateWeeklyPremium } from "../utils/pricing";
 import { useSiteLanguage } from "../utils/siteLanguage";
+import { buildAuthCallbackUrl } from "../utils/authRedirect";
 import { signUpWithEmail } from "../services/backend/sessionService";
 import { AuthPageShell, AuthPanel } from "../components/ui/auth-page-shell";
 
 const selectedPlanStorageKey = "gigshieldSelectedPlanId";
 const validPlanIds = new Set(planDetails.map((p) => p.id));
 
-function SignUpPage() {
+function SignUpPage({ setSession }) {
   const navigate = useNavigate();
   const { languageMode } = useSiteLanguage();
   const [searchParams] = useSearchParams();
@@ -31,6 +32,26 @@ function SignUpPage() {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const handleDemoMode = () => {
+    const demoSession = {
+      isAuthenticated: true,
+      mode: "demo",
+      name: "Demo Rider",
+      email: "rider@demo.app",
+      city: "New Delhi",
+      workerId: "DW-1029",
+      platforms: ["Zomato", "Blinkit"],
+      selectedPlanId,
+      signedInAt: new Date().toISOString(),
+    };
+    
+    import('../utils/session').then(({ saveSession }) => {
+      saveSession(demoSession);
+      if (setSession) setSession(demoSession);
+      navigate(`/dashboard?plan=${selectedPlanId}`);
+    });
+  };
 
   return (
     <AuthPageShell
@@ -102,8 +123,9 @@ function SignUpPage() {
                 setIsLoading(true);
                 setAuthError(null);
                 try {
-                  await signUpWithEmail({ email, password, fullName });
+                  const sessionData = await signUpWithEmail({ email, password, fullName });
                   localStorage.setItem(selectedPlanStorageKey, selectedPlanId);
+                  if (setSession) setSession(sessionData);
                   navigate(`/dashboard?plan=${selectedPlanId}`);
                 } catch (err) {
                   setAuthError(err.message || "Email sign-up failed.");
@@ -134,7 +156,8 @@ function SignUpPage() {
                 const { error } = await supabase.auth.signInWithOAuth({ 
                   provider: "google", 
                   options: { 
-                    redirectTo: `${window.location.origin}/auth/callback` 
+                    redirectTo: buildAuthCallbackUrl({ planId: selectedPlanId }),
+                    queryParams: { prompt: "select_account" },
                   } 
                 });
                 if (error) throw error;
@@ -148,22 +171,7 @@ function SignUpPage() {
 
           <button
             type="button"
-            onClick={() => {
-              import('../utils/session').then(({ saveSession }) => {
-                saveSession({
-                  isAuthenticated: true,
-                  mode: "demo",
-                  name: "Demo Rider",
-                  email: "rider@demo.app",
-                  city: "New Delhi",
-                  workerId: "DW-1029",
-                  platforms: ["Zomato", "Blinkit"],
-                  selectedPlanId,
-                  signedInAt: new Date().toISOString(),
-                });
-                window.location.href = `/dashboard?plan=${selectedPlanId}`;
-              });
-            }}
+            onClick={handleDemoMode}
             className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-zinc-300 shadow-sm transition hover:bg-white/10 backdrop-blur-sm"
           >
             {selectLabel(languageMode, "Explore as Demo User", "डेमो उपयोगकर्ता के रूप में एक्सप्लोर करें")}

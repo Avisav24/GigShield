@@ -8,13 +8,14 @@ import { selectLabel } from "../utils/i18n";
 import { calculateWeeklyPremium } from "../utils/pricing";
 import { useSiteLanguage } from "../utils/siteLanguage";
 import { saveSession } from "../utils/session";
+import { buildAuthCallbackUrl } from "../utils/authRedirect";
 import { signInWithEmail } from "../services/backend/sessionService";
 import { AuthPageShell, AuthPanel } from "../components/ui/auth-page-shell";
 
 const validPlanIds = new Set(planDetails.map((p) => p.id));
 const selectedPlanStorageKey = "gigshieldSelectedPlanId";
 
-function SignInPage() {
+function SignInPage({ setSession }) {
   const navigate = useNavigate();
   const { languageMode } = useSiteLanguage();
   const [searchParams] = useSearchParams();
@@ -31,6 +32,36 @@ function SignInPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const handleDemoSignIn = () => {
+    const premiumData = calculateWeeklyPremium({
+      basePremium: selectedPlan.weeklyPremium,
+      platformCount: 2,
+      riskLevel: "Medium",
+    });
+    
+    const demoSession = {
+      isAuthenticated: true,
+      mode: "demo",
+      name: userProfile.name,
+      email: "demo@gigshield.app",
+      city: userProfile.city,
+      workerId: "demo-worker",
+      platforms: ["Zomato", "Swiggy"],
+      selectedPlanId,
+      riskLevel: "Medium",
+      calculatedWeeklyPremium: premiumData.adjustedPremium,
+      premiumBreakdown: premiumData,
+      premiumHistory: [],
+      signedInAt: new Date().toISOString(),
+    };
+
+    saveSession(demoSession);
+    if (setSession) setSession(demoSession);
+    
+    localStorage.setItem(selectedPlanStorageKey, selectedPlanId);
+    navigate(`/dashboard?plan=${selectedPlanId}`);
+  };
 
   return (
     <AuthPageShell
@@ -123,8 +154,9 @@ function SignInPage() {
                     setIsLoading(true);
                     setAuthError(null);
                     try {
-                      await signInWithEmail({ email, password });
+                      const sessionData = await signInWithEmail({ email, password });
                       localStorage.setItem(selectedPlanStorageKey, selectedPlanId);
+                      if (setSession) setSession(sessionData);
                       navigate(`/dashboard?plan=${selectedPlanId}`);
                     } catch (err) {
                       setAuthError(err.message || "Email sign-in failed.");
@@ -143,30 +175,7 @@ function SignInPage() {
               <div className="animate-enter" style={{ animationDelay: '100ms' }}>
                 <button
                   type="button"
-                  onClick={() => {
-                    const premiumData = calculateWeeklyPremium({
-                      basePremium: selectedPlan.weeklyPremium,
-                      platformCount: 2,
-                      riskLevel: "Medium",
-                    });
-                    saveSession({
-                      isAuthenticated: true,
-                      mode: "demo",
-                      name: userProfile.name,
-                      email: "demo@gigshield.app",
-                      city: userProfile.city,
-                      workerId: "demo-worker",
-                      platforms: ["Zomato", "Swiggy"],
-                      selectedPlanId,
-                      riskLevel: "Medium",
-                      calculatedWeeklyPremium: premiumData.adjustedPremium,
-                      premiumBreakdown: premiumData,
-                      premiumHistory: [],
-                      signedInAt: new Date().toISOString(),
-                    });
-                    localStorage.setItem(selectedPlanStorageKey, selectedPlanId);
-                    navigate(`/dashboard?plan=${selectedPlanId}`);
-                  }}
+                  onClick={handleDemoSignIn}
                   className="group flex w-full items-center justify-center gap-4 rounded-[2.2rem] border-2 border-cyan-400/30 bg-cyan-400/10 px-8 py-5 text-sm font-black uppercase tracking-[0.2em] text-cyan-200 shadow-2xl shadow-cyan-950/20 transition-all hover:bg-cyan-400/20 hover:scale-[1.02] active:scale-[0.98]"
                 >
                   <Smartphone className="h-5 w-5 text-cyan-400" />
@@ -183,7 +192,7 @@ function SignInPage() {
                 setAuthError(null);
                 try {
                   const { supabase } = await import("../utils/supabase");
-                  const redirectTo = `${window.location.origin}/auth/callback`;
+                  const redirectTo = buildAuthCallbackUrl({ planId: selectedPlanId });
                   const { error } = await supabase.auth.signInWithOAuth({
                     provider: "google",
                     options: {

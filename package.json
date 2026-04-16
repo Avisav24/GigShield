@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "start": "vite",
+    "start": "node server.js",
     "dev": "vite",
-    "start:api": "node server.js",
+    "dev:api": "node server.js",
+    "start:fe": "vite",
     "postinstall": "node scripts/copy-mediapipe-assets.mjs",
     "build": "vite build",
     "test": "vitest run",

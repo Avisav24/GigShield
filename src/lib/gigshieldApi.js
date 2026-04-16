@@ -7,10 +7,12 @@
  */
 
 import { checkRiskWithFallback } from '../utils/riskEngine';
+import { getApiUrl } from '../utils/api';
+
 
 export async function checkGigShieldRisk(workerPayload) {
   try {
-    const response = await fetch('/api/automation/risk-check', {
+    const response = await fetch(getApiUrl('/api/automation/risk-check'), {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
       body:    JSON.stringify(workerPayload),
