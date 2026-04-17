@@ -26,6 +26,8 @@ function mapRowToReceipt(row) {
 
   return {
     ...payload,
+    claimId: row.claim_id || payload.claimId || "",
+    claimNumber: payload.claimNumber || "",
     payoutId: row.payout_id || payload.payoutId,
     payoutAmount: Number(row.payout_amount || payload.payoutAmount || 0),
     lifecycleStatus:
@@ -59,6 +61,26 @@ async function getActivePolicyForWorker(workerProfileId, planId) {
   return data || null;
 }
 
+async function updateClaimStatus(claimId, status, approvedIncomeLoss) {
+  if (!claimId) return { ok: true };
+
+  const payload = {
+    status,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (typeof approvedIncomeLoss === "number" && !Number.isNaN(approvedIncomeLoss)) {
+    payload.approved_income_loss = approvedIncomeLoss;
+  }
+
+  const { error } = await supabase.from("claims").update(payload).eq("id", claimId);
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
+}
+
 export async function syncPayoutReceiptToBackend(receipt) {
   if (!backendEnabled || !receipt?.payoutId) {
     return { ok: true, backend: false };
@@ -76,6 +98,57 @@ export async function syncPayoutReceiptToBackend(receipt) {
   const authUser = session?.user;
   if (!authUser) {
     return { ok: false, backend: false, error: "Authenticated session required" };
+  }
+
+  if (receipt.claimId) {
+    const payoutPayload = {
+      claim_id: receipt.claimId,
+      worker_profile_id: authUser.id,
+      payout_id: receipt.payoutId,
+      status: mapLifecycleStatus(receipt.lifecycleStatus),
+      payout_amount: Number(receipt.payoutAmount || 0),
+      currency: "INR",
+      payout_channel: "simulated_upi",
+      lifecycle_status: receipt.lifecycleStatus || null,
+      failure_reason_code: receipt.failureReasonCode || null,
+      failure_reason: receipt.failureReason || null,
+      verification_payload: receipt.receivedWithVerification || {},
+      payout_payload: receipt,
+      settled_at:
+        receipt.lifecycleStatus === "settled"
+          ? receipt.receivedAt || new Date().toISOString()
+          : null,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: payoutError } = await supabase
+      .from("payouts")
+      .upsert(payoutPayload, { onConflict: "payout_id" });
+
+    if (payoutError) {
+      return { ok: false, backend: false, error: payoutError.message };
+    }
+
+    const mappedClaimStatus =
+      receipt.lifecycleStatus === "settled"
+        ? "paid"
+        : receipt.lifecycleStatus === "failed"
+          ? "rejected"
+          : receipt.lifecycleStatus === "processing" || receipt.lifecycleStatus === "verified"
+            ? "approved"
+            : "reviewing";
+
+    const claimUpdate = await updateClaimStatus(
+      receipt.claimId,
+      mappedClaimStatus,
+      Number(receipt.payoutAmount || 0),
+    );
+
+    if (!claimUpdate.ok) {
+      return { ok: false, backend: false, error: claimUpdate.error };
+    }
+
+    return { ok: true, backend: true };
   }
 
   const policy = await getActivePolicyForWorker(authUser.id, receipt.planId);
@@ -177,6 +250,78 @@ export async function fetchPayoutHistoryFromBackend({ limit = 100 } = {}) {
     return data.map(mapRowToReceipt);
   } catch (err) {
     console.warn("[PayoutService] Sync fetch failed:", err.message);
+    return [];
+  }
+}
+
+export async function fetchLatestOpenPayoutCandidateFromBackend() {
+  if (!backendEnabled) {
+    return null;
+  }
+
+  const {
+    data: { session },
+    error: authError,
+  } = await supabase.auth.getSession();
+
+  if (authError || !session?.user) {
+    return null;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("payouts")
+      .select(
+        "claim_id, payout_id, status, payout_amount, payout_payload, created_at, updated_at, settled_at, failure_reason_code, failure_reason",
+      )
+      .eq("worker_profile_id", session.user.id)
+      .in("status", ["pending_verification", "verified", "processing", "failed"])
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (error || !data) {
+      return null;
+    }
+
+    return mapRowToReceipt(data);
+  } catch (err) {
+    console.warn("[PayoutService] Open candidate fetch failed:", err.message);
+    return null;
+  }
+}
+
+export async function fetchRecentPayoutAlertsFromBackend({ limit = 6 } = {}) {
+  if (!backendEnabled) {
+    return [];
+  }
+
+  const {
+    data: { session },
+    error: authError,
+  } = await supabase.auth.getSession();
+
+  if (authError || !session?.user) {
+    return [];
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("payouts")
+      .select(
+        "claim_id, payout_id, status, payout_amount, payout_payload, created_at, updated_at, settled_at, failure_reason_code, failure_reason",
+      )
+      .eq("worker_profile_id", session.user.id)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error || !Array.isArray(data)) {
+      return [];
+    }
+
+    return data.map(mapRowToReceipt);
+  } catch (err) {
+    console.warn("[PayoutService] Recent alerts fetch failed:", err.message);
     return [];
   }
 }

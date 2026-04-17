@@ -76,12 +76,16 @@ export async function syncTriggerEventToBackend(event, context = {}) {
     },
   };
 
-  const { error } = await supabase.from("trigger_events").insert(row);
+  const { data, error } = await supabase
+    .from("trigger_events")
+    .insert(row)
+    .select("id, city, trigger_key, severity, created_at")
+    .single();
   if (error) {
     return { ok: false, backend: false, error: error.message };
   }
 
-  return { ok: true, backend: true };
+  return { ok: true, backend: true, event: data || null };
 }
 
 export async function fetchRecentTriggerEventsFromBackend({ city, limit = 50 } = {}) {
@@ -92,6 +96,8 @@ export async function fetchRecentTriggerEventsFromBackend({ city, limit = 50 } =
   const query = supabase
     .from("trigger_events")
     .select("id, city, source, trigger_type, trigger_key, severity, status, signal_payload, created_at")
+    .neq("status", "expired")
+    .neq("status", "dismissed")
     .order("created_at", { ascending: false })
     .limit(limit);
 
@@ -103,4 +109,33 @@ export async function fetchRecentTriggerEventsFromBackend({ city, limit = 50 } =
   }
 
   return data.map(mapRowToAuditEvent);
+}
+
+export async function expireStaleTriggerEvents({ maxAgeHours = 4 } = {}) {
+  if (!backendEnabled) {
+    return { ok: true, backend: false, expiredCount: 0 };
+  }
+
+  const cutoff = new Date(Date.now() - maxAgeHours * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from("trigger_events")
+    .update({
+      status: "expired",
+      ends_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .in("status", ["observed", "confirmed"])
+    .lt("starts_at", cutoff)
+    .select("id");
+
+  if (error) {
+    return { ok: false, backend: true, expiredCount: 0, error: error.message };
+  }
+
+  return {
+    ok: true,
+    backend: true,
+    expiredCount: Array.isArray(data) ? data.length : 0,
+  };
 }

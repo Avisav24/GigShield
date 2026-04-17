@@ -92,45 +92,6 @@ export function HeroSection() {
             </div>
           </div>
 
-          <div className="pointer-events-none absolute bottom-6 left-1/2 z-10 w-[min(92%,72rem)] -translate-x-1/2">
-            <div className="rounded-[1.5rem] border border-white/10 bg-zinc-950/75 p-5 backdrop-blur-xl">
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-zinc-500">
-                    Worker
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-white">
-                    Delhi NCR rider
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-300">
-                    Multi-platform, weekly cash-flow dependent
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-zinc-500">
-                    Coverage
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-white">
-                    Parametric weekly plan
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-300">
-                    Triggered by weather, AQI, and outage events
-                  </p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.24em] text-zinc-500">
-                    Differentiator
-                  </p>
-                  <p className="mt-2 text-lg font-bold text-white">
-                    Income Radar
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-300">
-                    Advises safer zones before earnings fall
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 

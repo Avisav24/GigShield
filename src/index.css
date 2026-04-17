@@ -96,23 +96,23 @@ body::-webkit-scrollbar-thumb {
   }
 
   .board-soft {
-    @apply border-b border-gray-100 py-6 last:border-0;
+    @apply rounded-[1.75rem] border border-white/10 bg-white/[0.03] p-6 backdrop-blur-xl;
   }
 
   .kicker {
-    @apply text-[10px] font-black uppercase tracking-[0.3em] text-gray-400;
+    @apply text-[10px] font-black uppercase tracking-[0.3em] text-cyan-300/75;
   }
 
   .hero-title {
-    @apply font-display font-extrabold tracking-[-0.05em] text-gray-900;
+    @apply font-display font-extrabold tracking-[-0.05em] text-white;
   }
 
   .primary-btn {
-    @apply inline-flex items-center justify-center rounded-full bg-[#1a2229] px-4 sm:px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-gray-800;
+    @apply inline-flex items-center justify-center rounded-full bg-cyan-300 px-4 sm:px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-cyan-200;
   }
 
   .secondary-btn {
-    @apply inline-flex items-center justify-center rounded-full border border-gray-200 bg-white/80 px-4 sm:px-5 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-white backdrop-blur-sm;
+    @apply inline-flex items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 sm:px-5 py-2.5 text-sm font-semibold text-zinc-200 transition hover:bg-white/[0.08] backdrop-blur-sm;
   }
 
   .animate-enter {

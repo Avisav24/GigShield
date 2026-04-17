@@ -4,7 +4,7 @@ import { selectLabel } from "../utils/i18n";
 
 /*
  * Shows the payout-sensitive financial values that update after each trigger event.
- * This gives judges a quick before/after view during the demo.
+ * This gives workers and operators a quick before/after view of protected earnings.
  */
 function EarningsSnapshot({
   earningsProtectedThisWeek,

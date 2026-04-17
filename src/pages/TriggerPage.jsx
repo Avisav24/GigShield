@@ -34,7 +34,7 @@ function TriggerPage() {
       title={selectLabel(languageMode, "How trigger payouts work", "ट्रिगर भुगतान कैसे काम करते हैं")}
       highlight={selectLabel(languageMode, "in GigShield.", "GigShield में।")}
       description={selectLabel(languageMode, "A trigger is a verified disruption event. GigShield checks weekly plan rules, policy boundaries, caps, and risk controls before support is released.", "GigShield साप्ताहिक योजना, पॉलिसी सीमा, कैप और जोखिम नियंत्रण की जांच करके भुगतान जारी करता है।")}
-      primaryAction={{ to: "/dashboard", label: selectLabel(languageMode, "Try Trigger Demo", "ट्रिगर डेमो देखें") }}
+      primaryAction={{ to: "/dashboard", label: selectLabel(languageMode, "Open Trigger View", "ट्रिगर व्यू खोलें") }}
       secondaryAction={{ to: "/pricing", label: selectLabel(languageMode, "See Plans", "योजनाएं देखें") }}
       stats={[
         { label: "Monitoring", value: "Real-time", detail: "Weather, AQI, outage, and social disruption signals." },
@@ -120,7 +120,7 @@ function TriggerPage() {
         </div>
       </MarketingSection>
 
-      <MarketingSection title={selectLabel(languageMode, "Launch a live trigger demo", "लाइव ट्रिगर डेमो शुरू करें")} caption="Demo">
+      <MarketingSection title={selectLabel(languageMode, "Explore trigger behavior", "ट्रिगर व्यवहार देखें")} caption="Automation">
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {triggerEvents.map(event => (
             <Link key={event.id} to={`/dashboard?plan=standard&trigger=${event.id}`}

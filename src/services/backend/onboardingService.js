@@ -1,4 +1,5 @@
 import planDetails from "../../data/planDetails.json";
+import { getCityZones } from "../../utils/incomeRadar";
 import { getPersonaRiskProfile } from "../../utils/onboardingProfile";
 import { calculateWeeklyPremium } from "../../utils/pricing";
 import { getSession, saveSession } from "../../utils/session";
@@ -108,7 +109,16 @@ export async function syncOnboardingToBackend(formData) {
       preferred_language: "en",
       onboarding_status: "active",
       rider_id: formData.riderId || workerId,
-      preferred_zones: [],
+      preferred_zones:
+        Array.isArray(formData.preferredZones) && formData.preferredZones.length > 0
+          ? formData.preferredZones
+          : getCityZones(formData.city || "New Delhi")
+              .slice(0, 2)
+              .map((zone) => ({
+                id: zone.id,
+                name: zone.name,
+                corridor: zone.corridor,
+              })),
       updated_at: new Date().toISOString(),
     };
 
@@ -219,6 +229,7 @@ export async function syncOnboardingToBackend(formData) {
         selectedPlanId: selectedPlan.id,
         coverageTriggers,
         weeklyPremium: premium.adjustedPremium,
+        preferredZones: workerProfileRow.preferred_zones,
         workPattern: formData.workPattern || localSession.workPattern,
         weeklyEarningsBand: formData.weeklyEarningsBand || localSession.weeklyEarningsBand,
       });

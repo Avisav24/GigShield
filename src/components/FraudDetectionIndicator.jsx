@@ -38,7 +38,7 @@ function FraudDetectionIndicator({
       <div className="space-y-8">
         <div>
           <p className="mb-4 text-[10px] font-black uppercase tracking-widest text-zinc-500">
-            {selectLabel(languageMode, "Demo: Choose Worker Profile", "डेमो: वर्कर प्रोफ़ाइल चुनें")}
+            {selectLabel(languageMode, "Choose Worker Profile", "वर्कर प्रोफ़ाइल चुनें")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             {Object.entries(fraudProfiles).map(([personaKey]) => {

@@ -23,7 +23,7 @@ function clamp(value, min = 0, max = 100) {
   return Math.max(min, Math.min(max, Math.round(value)));
 }
 
-function getCityZones(city) {
+export function getCityZones(city) {
   return zoneCatalog[city] || zoneCatalog["New Delhi"];
 }
 
@@ -47,7 +47,7 @@ function getTomorrowOutlook(zones, probability, riskLevel) {
 
 function buildDemoStory(safestZone, highestRiskZone) {
   return {
-    title: "Judge demo story",
+    title: "Protection flow",
     setup: `A rider begins the day in ${highestRiskZone.name}, where disruption pressure is rising fast.`,
     move: `Income Radar redirects the rider toward ${safestZone.name} for a stronger earning window.`,
     fallback: `If disruption still expands, GigShield already knows when the protection window opens and can release support automatically.`,

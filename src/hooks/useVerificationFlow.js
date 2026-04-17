@@ -20,6 +20,7 @@ export function useVerificationFlow() {
     vehicleType: "",
     riderProof: null,
     riderProofPreview: null,
+    preferredZones: [],
     coverageTriggers: [],
     selectedPlanId: "standard",
   });

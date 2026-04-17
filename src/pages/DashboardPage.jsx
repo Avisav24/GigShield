@@ -47,13 +47,15 @@ import {
   savePredictiveAssessment,
 } from "../utils/predictiveSafetyNet";
 import { getCompositeDisruptionSignals } from "../utils/integrations";
-import { computeReputationProfile } from "../utils/reputation";
 import { getPlanOptimizerRecommendation } from "../utils/planOptimizer";
 import { AppSurface } from "../components/ui/app-page-shell";
 import { buildIncomeRadar } from "../utils/incomeRadar";
 import { saveIncomeRadarSnapshot } from "../services/backend/incomeRadarService";
 import { useHydratedSession } from "../hooks/useHydratedSession";
 import { fetchDashboardMetrics } from "../services/backend/dashboardMetricsService";
+import { fetchOperationsInsights } from "../services/backend/operationsInsightsService";
+import { fetchLatestAutomationAssessmentFromBackend } from "../services/backend/automationAssessmentService";
+import { fetchWorkerClaimAlerts } from "../services/backend/claimStatusService";
 
 const selectedPlanStorageKey = "gigshieldSelectedPlanId";
 const backendPersistenceEnabled =
@@ -209,6 +211,9 @@ export default function DashboardPage() {
     backendPersistenceEnabled ? "waiting" : "local-only",
   );
   const [dashboardMetrics, setDashboardMetrics] = useState(null);
+  const [recentDisruptions, setRecentDisruptions] = useState([]);
+  const [latestAutomationAssessment, setLatestAutomationAssessment] = useState(null);
+  const [workerClaimAlerts, setWorkerClaimAlerts] = useState([]);
 
   const availablePlatforms = ["Swiggy", "Zomato", "Blinkit"];
   const persistedPlanId = localStorage.getItem(selectedPlanStorageKey);
@@ -274,6 +279,22 @@ export default function DashboardPage() {
   useEffect(() => {
     let alive = true;
 
+    const syncWorkerClaimAlerts = async () => {
+      const alerts = await fetchWorkerClaimAlerts({ limit: 6 });
+      if (!alive) return;
+      setWorkerClaimAlerts(alerts);
+    };
+
+    syncWorkerClaimAlerts();
+
+    return () => {
+      alive = false;
+    };
+  }, [session?.workerId, recentDisruptions.length]);
+
+  useEffect(() => {
+    let alive = true;
+
     const syncTriggerAudit = async () => {
       const hydrated = await hydrateTriggerAuditEvents({
         city: session?.city || "New Delhi",
@@ -294,6 +315,25 @@ export default function DashboardPage() {
       alive = false;
     };
   }, [session?.city]);
+
+  useEffect(() => {
+    let alive = true;
+
+    const syncLatestAutomationAssessment = async () => {
+      const latest = await fetchLatestAutomationAssessmentFromBackend();
+      if (!alive || !latest) {
+        return;
+      }
+
+      setLatestAutomationAssessment(latest);
+    };
+
+    syncLatestAutomationAssessment();
+
+    return () => {
+      alive = false;
+    };
+  }, [session?.workerId]);
 
   useEffect(() => {
     let alive = true;
@@ -601,14 +641,6 @@ export default function DashboardPage() {
   const weeklySupportCap = dailyPayoutCap * 7;
   const weeklySupportLeft = Math.max(0, weeklySupportCap - weeklyPaidAmount);
   const emergencyActive = Boolean(latestTrigger);
-  const reputationProfile = useMemo(
-    () =>
-      computeReputationProfile({
-        payoutHistory: getPayoutHistory(),
-        predictiveHistory: getPredictiveAssessments({ limit: 100 }),
-      }),
-    [],
-  );
 
   const planOptimizer = useMemo(
     () =>
@@ -662,6 +694,28 @@ export default function DashboardPage() {
       cancelled = true;
     };
   }, [incomeRadar, session?.city, session?.workerId]);
+
+  useEffect(() => {
+    let alive = true;
+
+    const syncOperationsInsights = async () => {
+      const insights = await fetchOperationsInsights({
+        city: session?.city || "New Delhi",
+      });
+
+      if (!alive || !insights) {
+        return;
+      }
+
+      setRecentDisruptions(insights.recentDisruptions || []);
+    };
+
+    syncOperationsInsights();
+
+    return () => {
+      alive = false;
+    };
+  }, [session?.city]);
 
   return (
     <main className="min-h-screen overflow-x-hidden bg-[#09090b] pb-24 font-sans text-white">
@@ -782,8 +836,8 @@ export default function DashboardPage() {
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200">
                   {selectLabel(
                     languageMode,
-                    "Judge Demo Step 3",
-                    "जज डेमो स्टेप 3",
+                    "Live Protection Workspace",
+                    "लाइव प्रोटेक्शन वर्कस्पेस",
                   )}
                 </p>
                 <p className="mt-3 text-lg font-bold text-white">
@@ -796,8 +850,8 @@ export default function DashboardPage() {
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-cyan-50/90">
                   {selectLabel(
                     languageMode,
-                    "Show Income Radar first, then trigger a disruption below to demonstrate how GigShield moves from prediction to automated income protection.",
-                    "पहले इनकम रडार दिखाएं, फिर नीचे कोई ट्रिगर चलाकर बताएं कि GigShield प्रेडिक्शन से ऑटोमेटेड आय सुरक्षा तक कैसे जाता है।",
+                    "Use Income Radar to understand risk, then trigger a disruption below to see how GigShield moves from prediction to automated income protection.",
+                    "इनकम रडार से जोखिम समझें, फिर नीचे कोई ट्रिगर चलाकर देखें कि GigShield प्रेडिक्शन से ऑटोमेटेड आय सुरक्षा तक कैसे जाता है।",
                   )}
                 </p>
               </div>
@@ -811,6 +865,17 @@ export default function DashboardPage() {
                     languageMode,
                     "Reopen Income Radar",
                     "इनकम रडार खोलें",
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => navigate("/profile")}
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] px-4 text-[11px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-white/[0.14]"
+                >
+                  {selectLabel(
+                    languageMode,
+                    "Open Profile",
+                    "प्रोफाइल खोलें",
                   )}
                 </button>
                 <button
@@ -948,6 +1013,180 @@ export default function DashboardPage() {
         </section>
 
         <section className="mb-12">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              {selectLabel(languageMode, "Protection Already In Motion", "सुरक्षा पहले से सक्रिय है")}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/payout-history")}
+              className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 transition hover:text-white"
+            >
+              {selectLabel(languageMode, "Open Payout History", "पेआउट हिस्ट्री खोलें")}
+            </button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {workerClaimAlerts.length === 0 ? (
+              <AppSurface className="md:col-span-3">
+                <p className="text-sm font-medium text-zinc-400">
+                  {selectLabel(
+                    languageMode,
+                    "No automatic protection actions have been created for your account yet.",
+                    "आपके खाते के लिए अभी कोई ऑटोमैटिक सुरक्षा एक्शन नहीं बनाया गया है।",
+                  )}
+                </p>
+              </AppSurface>
+            ) : (
+              workerClaimAlerts.slice(0, 3).map((item) => (
+                <AppSurface key={item.id} className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-black text-white">{item.claimNumber}</p>
+                    <span
+                      className={`rounded-full border px-2 py-1 text-[9px] font-black uppercase tracking-widest ${
+                        item.tone === "positive"
+                          ? "border-emerald-400/20 bg-emerald-500/10 text-emerald-300"
+                          : "border-amber-400/20 bg-amber-500/10 text-amber-300"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-zinc-300">
+                    {item.city || session?.city || "Unknown city"} · {formatRelativeTime(item.createdAt)}
+                  </p>
+                  {item.zoneName ? (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      {selectLabel(languageMode, "Matched Zone", "मैच्ड ज़ोन")}: {item.zoneName}
+                    </p>
+                  ) : null}
+                  <p className="text-sm font-semibold text-white">
+                    {item.recommendation || selectLabel(languageMode, "Protection has been initiated for this disruption.", "इस व्यवधान के लिए सुरक्षा शुरू कर दी गई है।")}
+                  </p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    {selectLabel(languageMode, "Estimated protected amount", "अनुमानित सुरक्षित राशि")}: {formatCurrency(item.approvedIncomeLoss || item.estimatedIncomeLoss || 0)}
+                  </p>
+                </AppSurface>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              {selectLabel(languageMode, "Recent Disruptions Near You", "आपके पास हाल के व्यवधान")}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/trust-center")}
+              className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 transition hover:text-white"
+            >
+              {selectLabel(languageMode, "Open Trust Feed", "ट्रस्ट फीड खोलें")}
+            </button>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {recentDisruptions.length === 0 ? (
+              <AppSurface className="md:col-span-3">
+                <p className="text-sm font-medium text-zinc-400">
+                  {selectLabel(
+                    languageMode,
+                    "No recent disruption memory has been synced for your city yet.",
+                    "आपके शहर के लिए हाल का व्यवधान डेटा अभी सिंक नहीं हुआ है।",
+                  )}
+                </p>
+              </AppSurface>
+            ) : (
+              recentDisruptions.slice(0, 3).map((item) => (
+                <AppSurface key={item.id} className="space-y-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-black text-white">{item.label}</p>
+                    <span className="rounded-full border border-white/10 bg-white/[0.03] px-2 py-1 text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                      {item.severity}
+                    </span>
+                  </div>
+                  <p className="text-xs font-medium text-zinc-300">
+                    {item.city} · {formatRelativeTime(item.createdAt)}
+                  </p>
+                  {item.zoneName ? (
+                    <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      {selectLabel(languageMode, "Zone", "ज़ोन")}: {item.zoneName}
+                    </p>
+                  ) : null}
+                  <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                    {selectLabel(languageMode, "Source", "स्रोत")}: {item.source}
+                  </p>
+                </AppSurface>
+              ))
+            )}
+          </div>
+        </section>
+
+        <section className="mb-12">
+          <div className="mb-6 flex items-center justify-between gap-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+              {selectLabel(languageMode, "Recommended Action Right Now", "अभी सुझाया गया एक्शन")}
+            </p>
+            <button
+              type="button"
+              onClick={() => navigate("/payout")}
+              className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 transition hover:text-white"
+            >
+              {selectLabel(languageMode, "Open Payout Flow", "पेआउट फ्लो खोलें")}
+            </button>
+          </div>
+          <AppSurface className="space-y-4">
+            {latestAutomationAssessment ? (
+              <>
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <div>
+                    <p className="text-lg font-black text-white">
+                      {latestAutomationAssessment.riskLevel?.toUpperCase()} {selectLabel(languageMode, "risk recommendation", "रिस्क रिकमेंडेशन")}
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-zinc-300">
+                      {latestAutomationAssessment.recommendedAction || latestAutomationAssessment.explanation}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 text-right">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                      {selectLabel(languageMode, "Confidence", "कॉन्फिडेंस")}
+                    </p>
+                    <p className="text-xl font-black text-white">{latestAutomationAssessment.confidence}%</p>
+                  </div>
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                      {selectLabel(languageMode, "Trigger", "ट्रिगर")}
+                    </p>
+                    <p className="mt-2 text-sm font-black text-white">{latestAutomationAssessment.lastTrigger || "none"}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                      {selectLabel(languageMode, "Next Risk Window", "अगला रिस्क विंडो")}
+                    </p>
+                    <p className="mt-2 text-sm font-black text-white">{latestAutomationAssessment.nextRiskWindow || "--"}</p>
+                  </div>
+                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
+                      {selectLabel(languageMode, "Protected Earnings", "सुरक्षित कमाई")}
+                    </p>
+                    <p className="mt-2 text-sm font-black text-white">{formatCurrency(latestAutomationAssessment.earningsProtected || 0)}</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm font-medium text-zinc-400">
+                {selectLabel(
+                  languageMode,
+                  "Run the live risk engine to generate a backend-backed rider recommendation.",
+                  "बैकएंड आधारित राइडर रिकमेंडेशन बनाने के लिए लाइव रिस्क इंजन चलाएं।",
+                )}
+              </p>
+            )}
+          </AppSurface>
+        </section>
+
+        <section className="mb-12">
           <p className="mb-6 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
             {selectLabel(languageMode, "Income Radar", "इनकम रडार")}
           </p>
@@ -993,71 +1232,6 @@ export default function DashboardPage() {
               onPersonaChange={setActivePersonaKey}
               languageMode={languageMode}
             />
-
-            <div className="space-y-6">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-                {selectLabel(
-                  languageMode,
-                  "Rider Reputation",
-                  "राइडर रेपुटेशन",
-                )}
-              </p>
-              <AppSurface className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-black uppercase tracking-widest text-zinc-500">
-                    {selectLabel(
-                      languageMode,
-                      "Reliability Tier",
-                      "रिलायबिलिटी टियर",
-                    )}
-                  </p>
-                  <span
-                    className={`px-2 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      reputationProfile.tier === "Gold"
-                        ? "bg-amber-500/10 text-amber-200"
-                        : reputationProfile.tier === "Silver"
-                          ? "bg-slate-500/10 text-slate-200"
-                          : "bg-orange-500/10 text-orange-200"
-                    }`}
-                  >
-                    {reputationProfile.tier}
-                  </span>
-                </div>
-                <p className="text-3xl font-black tracking-tight text-white">
-                  {reputationProfile.score}
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
-                      {selectLabel(languageMode, "Settled", "सेटल्ड")}
-                    </p>
-                    <p className="text-sm font-black text-white">
-                      {reputationProfile.settlementRatePct}%
-                    </p>
-                  </div>
-                  <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                    <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500">
-                      {selectLabel(
-                        languageMode,
-                        "Predictive Win",
-                        "प्रेडिक्टिव विन",
-                      )}
-                    </p>
-                    <p className="text-sm font-black text-white">
-                      {reputationProfile.predictiveSuccessRatePct}%
-                    </p>
-                  </div>
-                </div>
-                <p className="text-xs font-medium text-zinc-300">
-                  {reputationProfile.reviewNote}
-                </p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-                  {selectLabel(languageMode, "Benefit", "बेनेफिट")}: +
-                  {reputationProfile.benefits.advanceBoostPct}%{" "}
-                  {selectLabel(languageMode, "advance edge", "एडवांस एज")}
-                </p>
-              </AppSurface>
-            </div>
 
             <div className="space-y-6">
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">

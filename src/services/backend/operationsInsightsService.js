@@ -36,7 +36,9 @@ export async function fetchOperationsInsights({ city } = {}) {
     const [triggerResult, automationResult, payoutsResult] = await Promise.all([
       supabase
         .from("trigger_events")
-        .select("id, city, trigger_key, severity, status, created_at, signal_payload")
+        .select("id, city, zone_name, trigger_key, severity, status, created_at, signal_payload")
+        .neq("status", "expired")
+        .neq("status", "dismissed")
         .gte("created_at", weekIso)
         .order("created_at", { ascending: false })
         .limit(100),
@@ -67,6 +69,7 @@ export async function fetchOperationsInsights({ city } = {}) {
       severity: item.severity || "medium",
       status: item.status || "observed",
       city: item.city || "Unknown",
+      zoneName: item.zone_name || item.signal_payload?.zoneName || "",
       createdAt: item.created_at,
       source: item.signal_payload?.source || "gigshield_app",
     }));

@@ -11,15 +11,13 @@ const STEP_LABELS = [
 export default function StepProgress({ currentStep, totalSteps }) {
   return (
     <div className="w-full">
-      {/* Progress bar */}
-      <div className="h-1.5 w-full rounded-full bg-coal-100 overflow-hidden mb-4">
+      <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
         <div
-          className="h-full rounded-full bg-coal-900 transition-all duration-500 ease-out"
+          className="h-full rounded-full bg-cyan-300 transition-all duration-500 ease-out"
           style={{ width: `${((currentStep - 1) / (totalSteps - 1)) * 100}%` }}
         />
       </div>
 
-      {/* Step dots */}
       <div className="flex items-center justify-between">
         {STEP_LABELS.map((label, idx) => {
           const stepNum = idx + 1;
@@ -30,10 +28,10 @@ export default function StepProgress({ currentStep, totalSteps }) {
               <div
                 className={`h-6 w-6 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                   isCompleted
-                    ? "bg-coal-900 text-white"
+                    ? "bg-cyan-300 text-slate-950"
                     : isCurrent
-                    ? "bg-coal-900 text-white ring-4 ring-coal-200"
-                    : "bg-coal-100 text-coal-400"
+                    ? "bg-cyan-300 text-slate-950 ring-4 ring-cyan-300/20"
+                    : "bg-white/10 text-zinc-500 border border-white/10"
                 }`}
               >
                 {isCompleted ? (
@@ -46,7 +44,7 @@ export default function StepProgress({ currentStep, totalSteps }) {
               </div>
               <span
                 className={`hidden sm:block text-[10px] font-semibold transition-colors ${
-                  isCurrent ? "text-coal-900" : isCompleted ? "text-coal-600" : "text-coal-300"
+                  isCurrent ? "text-cyan-200" : isCompleted ? "text-zinc-300" : "text-zinc-500"
                 }`}
               >
                 {label}

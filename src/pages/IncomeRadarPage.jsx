@@ -58,21 +58,20 @@ export default function IncomeRadarPage() {
         "Income Radar predicts safer earning zones, risky pockets, and the next best shift move before disruption fully hurts worker income.",
         "इनकम रडार सुरक्षित कमाई ज़ोन, जोखिम वाले क्षेत्र और अगली बेहतर शिफ्ट मूव का अनुमान लगाता है, इससे पहले कि व्यवधान आय को नुकसान पहुंचाए।",
       )}
-      primaryAction={{ to: "/dashboard", label: selectLabel(languageMode, "Open Live Demo", "लाइव डेमो खोलें") }}
-      secondaryAction={{ to: "/judge-demo", label: selectLabel(languageMode, "Return To Demo Story", "डेमो स्टोरी पर लौटें") }}
+      primaryAction={{ to: "/dashboard", label: selectLabel(languageMode, "Open Dashboard", "डैशबोर्ड खोलें") }}
+      secondaryAction={{ to: "/get-protected", label: selectLabel(languageMode, "Get Protected", "सुरक्षा शुरू करें") }}
       stats={[
         { label: "Purpose", value: "Avoid loss first", detail: "GigShield helps workers move before income drops." },
         { label: "Signals", value: "Hyperlocal", detail: "Zone risk, earning windows, and disruption pressure." },
         { label: "Protection", value: "Payout-ready", detail: "Coverage timing stays connected to risky windows." },
-        { label: "Judge hook", value: "Memorable", detail: "This is the feature that makes GigShield feel different." },
+        { label: "Outcome", value: "Actionable", detail: "Workers get a real next move, not just a score." },
       ]}
     >
-      <MarketingSection title={selectLabel(languageMode, "How judges should use this page", "जज इस पेज का उपयोग कैसे करें")} caption="Quick guidance" className="mt-0">
+      <MarketingSection title={selectLabel(languageMode, "How this feature helps workers", "यह फीचर वर्कर्स की कैसे मदद करता है")} caption="Quick guidance" className="mt-0">
         <div className="rounded-[1.75rem] border border-cyan-300/20 bg-cyan-300/10 p-6 backdrop-blur-xl">
           <p className="text-sm leading-8 text-cyan-50/95">
-            Lead with this page when you want to show why GigShield is different. Once the judge understands
-            that Income Radar helps a rider avoid loss before disruption fully hits, move to the live dashboard
-            to simulate a trigger and then open the payout flow to show the automation.
+            Income Radar helps a worker act before earnings are hit. It turns weather, AQI, and disruption signals
+            into practical guidance on safer zones, better timing, and when payout-ready protection matters most.
           </p>
         </div>
       </MarketingSection>
@@ -132,7 +131,7 @@ export default function IncomeRadarPage() {
         </div>
       </MarketingSection>
 
-      <MarketingSection title={selectLabel(languageMode, "Judge demo story", "जज डेमो स्टोरी")} caption="One memorable flow">
+      <MarketingSection title={selectLabel(languageMode, "How the workflow unfolds", "वर्कफ़्लो कैसे आगे बढ़ता है")} caption="Protection flow">
         <div className="grid gap-4 md:grid-cols-3">
           <SurfaceCard>
             <div className="flex size-10 items-center justify-center rounded-xl bg-white/8 text-cyan-300">

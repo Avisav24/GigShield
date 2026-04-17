@@ -62,28 +62,28 @@ export default function StepCoverage({ formData, updateField, onActivate, isLoad
       <div>
         <p className="kicker mb-1">Step 4 of 4</p>
         <h2 className="hero-title text-3xl sm:text-4xl leading-tight">Create your weekly protection plan</h2>
-        <p className="mt-2 text-coal-500 text-sm">Select the disruptions you want covered and review your AI risk profile</p>
+        <p className="mt-2 text-sm text-zinc-400">Select the disruptions you want covered and review your AI risk profile</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.15fr,0.85fr]">
-        <div className="rounded-2xl border border-coal-200 bg-white p-5">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5 backdrop-blur-xl">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="kicker">AI Risk Assessment</p>
-              <h3 className="mt-1 text-lg font-semibold text-coal-900">{profile.riskLevel} disruption risk</h3>
-              <p className="mt-1 text-sm text-coal-500">Persona score: {profile.score}/100</p>
+              <h3 className="mt-1 text-lg font-semibold text-white">{profile.riskLevel} disruption risk</h3>
+              <p className="mt-1 text-sm text-zinc-400">Persona score: {profile.score}/100</p>
             </div>
             <div className={`rounded-full px-3 py-1 text-xs font-bold ${
               profile.riskLevel === "High"
-                ? "bg-red-100 text-red-700"
+                ? "bg-red-500/15 text-red-200"
                 : profile.riskLevel === "Medium"
-                  ? "bg-amber-100 text-amber-700"
-                  : "bg-green-100 text-green-700"
+                  ? "bg-amber-500/15 text-amber-200"
+                  : "bg-emerald-500/15 text-emerald-200"
             }`}>
               {profile.recommendedPlanId.toUpperCase()} recommended
             </div>
           </div>
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-coal-100">
+          <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
             <div
               className={`h-full rounded-full ${
                 profile.riskLevel === "High"
@@ -97,20 +97,20 @@ export default function StepCoverage({ formData, updateField, onActivate, isLoad
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {profile.drivers.length > 0 ? profile.drivers.map((driver) => (
-              <span key={driver} className="rounded-full bg-coal-100 px-3 py-1 text-xs font-semibold text-coal-700">
+              <span key={driver} className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-semibold text-zinc-300">
                 {driver}
               </span>
             )) : (
-              <span className="rounded-full bg-coal-100 px-3 py-1 text-xs font-semibold text-coal-700">
+              <span className="rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-semibold text-zinc-300">
                 balanced exposure profile
               </span>
             )}
           </div>
         </div>
 
-        <div className="rounded-2xl border border-electric-200 bg-electric-50 p-5">
+        <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/8 p-5 backdrop-blur-xl">
           <p className="kicker">Weekly Pricing</p>
-          <label className="mt-3 block text-sm font-semibold text-coal-700">Choose Plan</label>
+          <label className="mt-3 block text-sm font-semibold text-zinc-200">Choose Plan</label>
           <div className="mt-2 grid gap-2">
             {planDetails.map((plan) => {
               const selectedPlanCard = formData.selectedPlanId === plan.id;
@@ -121,8 +121,8 @@ export default function StepCoverage({ formData, updateField, onActivate, isLoad
                   onClick={() => updateField("selectedPlanId", plan.id)}
                   className={`rounded-2xl border px-4 py-3 text-left transition ${
                     selectedPlanCard
-                      ? "border-coal-900 bg-coal-900 text-white"
-                      : "border-white bg-white/80 text-coal-800 hover:border-coal-300"
+                      ? "border-cyan-300/60 bg-slate-950/70 text-white"
+                      : "border-white/10 bg-white/[0.06] text-zinc-200 hover:border-white/20"
                   }`}
                 >
                   <div className="flex items-center justify-between gap-3">
@@ -138,16 +138,16 @@ export default function StepCoverage({ formData, updateField, onActivate, isLoad
                       /week
                     </span>
                   </div>
-                  <p className={`mt-1 text-xs ${selectedPlanCard ? "text-white/70" : "text-coal-500"}`}>{plan.coverageHours}</p>
+                  <p className={`mt-1 text-xs ${selectedPlanCard ? "text-zinc-400" : "text-zinc-500"}`}>{plan.coverageHours}</p>
                 </button>
               );
             })}
           </div>
-          <div className="mt-4 rounded-xl bg-white/80 p-4">
-            <p className="text-xs font-bold uppercase tracking-widest text-coal-400">Policy preview</p>
-            <p className="mt-2 text-2xl font-black text-coal-900">{formatCurrency(premium.adjustedPremium)}</p>
-            <p className="text-sm text-coal-500">per week for {selectedPlan.name} protection</p>
-            <p className="mt-2 text-xs text-coal-500">
+          <div className="mt-4 rounded-xl border border-white/10 bg-slate-950/45 p-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">Policy preview</p>
+            <p className="mt-2 text-2xl font-black text-white">{formatCurrency(premium.adjustedPremium)}</p>
+            <p className="text-sm text-zinc-400">per week for {selectedPlan.name} protection</p>
+            <p className="mt-2 text-xs text-zinc-500">
               Trigger-based income loss cover only. Health, life, accidents, and vehicle repairs are excluded.
             </p>
           </div>
@@ -163,29 +163,31 @@ export default function StepCoverage({ formData, updateField, onActivate, isLoad
               type="button"
               onClick={() => toggle(t.id)}
               className={`relative rounded-2xl border-2 p-4 text-left transition-all duration-200 ${
-                isActive ? t.activeColor : `border-coal-200 bg-white ${t.color}`
+                isActive
+                  ? "border-cyan-300/60 bg-cyan-300/10"
+                  : "border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.05]"
               }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <span className="text-2xl">{t.icon}</span>
                 <span className={`mt-1 h-5 w-5 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                  isActive ? `${t.checkColor} border-transparent` : "border-coal-300 bg-white"
+                  isActive ? "border-transparent bg-cyan-300 text-slate-950" : "border-white/15 bg-transparent"
                 }`}>
                   {isActive && (
-                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2}>
+                    <svg className="h-3 w-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
                     </svg>
                   )}
                 </span>
               </div>
-              <p className="mt-2 font-semibold text-coal-900 text-sm">{t.label}</p>
-              <p className="mt-0.5 text-xs text-coal-500">{t.desc}</p>
+              <p className="mt-2 text-sm font-semibold text-white">{t.label}</p>
+              <p className="mt-0.5 text-xs text-zinc-500">{t.desc}</p>
             </button>
           );
         })}
       </div>
 
-      <div className="rounded-xl bg-signal-50 border border-signal-100 px-4 py-3 text-xs text-coal-600">
+      <div className="rounded-xl border border-cyan-300/15 bg-cyan-300/8 px-4 py-3 text-xs text-zinc-300">
         ⚡ GigShield uses these signals plus your rider persona, city, and work pattern to determine weekly pricing and automatic payouts.
       </div>
 

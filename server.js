@@ -238,6 +238,26 @@ function buildResponse({ worker, weather, aqi, risk }) {
   };
 }
 
+const DEFAULT_SIGNAL_SWEEP_CITIES = [
+  { name: "New Delhi", latitude: 28.6139, longitude: 77.2090 },
+  { name: "Mumbai", latitude: 19.0760, longitude: 72.8777 },
+  { name: "Bengaluru", latitude: 12.9716, longitude: 77.5946 },
+];
+
+function mapRiskTriggerToEventKey(triggerType) {
+  if (triggerType === "heavy_rain" || triggerType === "snowfall") return "heavy-rain";
+  if (triggerType === "extreme_heat") return "heatwave";
+  if (triggerType === "poor_aqi") return "aqi-spike";
+  if (triggerType === "high_wind") return "zone-closure";
+  return "";
+}
+
+function mapRiskLevelToSeverity(riskLevel) {
+  if (riskLevel === "high") return "high";
+  if (riskLevel === "medium") return "medium";
+  return "low";
+}
+
 // ─── POST /api/automation/risk-check ──────────────────────────────────────────
 app.post('/api/automation/risk-check', async (req, res) => {
   try {
@@ -287,6 +307,69 @@ app.post('/api/automation/risk-check', async (req, res) => {
       details: err.message,
       stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
     });
+  }
+});
+
+app.post('/api/automation/signal-sweep', async (req, res) => {
+  try {
+    const inputCities = Array.isArray(req.body?.cities) && req.body.cities.length > 0
+      ? req.body.cities
+      : DEFAULT_SIGNAL_SWEEP_CITIES;
+
+    const scans = await Promise.all(
+      inputCities.map(async (city) => {
+        const latitude = Number(city.latitude);
+        const longitude = Number(city.longitude);
+        const cityName = city.name || city.city || "Unknown";
+
+        const [weather, aqi] = await Promise.all([
+          getRealWeather(latitude, longitude),
+          getAQI(latitude, longitude),
+        ]);
+
+        const risk = computeRisk({
+          weather,
+          aqi,
+          basePremium: Number(city.basePremium || 129),
+        });
+
+        return {
+          city: cityName,
+          latitude,
+          longitude,
+          scannedAt: new Date().toISOString(),
+          weather,
+          aqi,
+          riskLevel: risk.riskLevel,
+          riskScore: risk.riskScore,
+          confidence: risk.confidence,
+          triggerType: risk.triggerType,
+          triggerKey: mapRiskTriggerToEventKey(risk.triggerType),
+          severity: mapRiskLevelToSeverity(risk.riskLevel),
+          notification:
+            risk.riskLevel === "high"
+              ? `High disruption risk detected in ${cityName}.`
+              : risk.riskLevel === "medium"
+                ? `Medium disruption risk building in ${cityName}.`
+                : `No major disruption detected in ${cityName}.`,
+          explanation: risk.explanation,
+          recommendedAction: risk.recommendedAction,
+          claimStatus: risk.claimStatus,
+          earningsProtected: risk.earningsProtected,
+        };
+      }),
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        scannedAt: new Date().toISOString(),
+        scans,
+      },
+    });
+  } catch (err) {
+    console.error("[GigShield] Unexpected error in signal-sweep:", err);
+    return res.status(500).json({ success: false, error: "Signal sweep failed" });
   }
 });
 

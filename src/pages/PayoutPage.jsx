@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LanguageToggle from "../components/LanguageToggle";
 import SelfieVerificationPanel from "../components/SelfieVerificationPanel";
@@ -14,6 +14,7 @@ import { trackEvent } from "../utils/observability";
 import { AppPageShell, AppSurface } from "../components/ui/app-page-shell";
 import {
   clearPayoutReceipt,
+  createPayoutReceipt,
   getFailureReasonLabel,
   getPayoutReceipt,
   payoutFailureReasonCodes,
@@ -21,6 +22,7 @@ import {
   transitionPayoutLifecycle,
 } from "../utils/payoutReceipt";
 import { useHydratedSession } from "../hooks/useHydratedSession";
+import { fetchLatestOpenPayoutCandidateFromBackend } from "../services/backend/payoutService";
 
 function getLifecycleLabel(languageMode, status) {
   const labels = {
@@ -87,6 +89,61 @@ function PayoutPage() {
     };
   });
   const [isProcessing, setIsProcessing] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    const hydrateBackendPayoutCandidate = async () => {
+      const candidate = await fetchLatestOpenPayoutCandidateFromBackend();
+      if (!alive || !candidate?.payoutId) {
+        return;
+      }
+
+      const localReceipt = getPayoutReceipt();
+      const localUpdatedAt = new Date(
+        localReceipt?.lifecycleUpdatedAt || localReceipt?.createdAt || 0,
+      ).getTime();
+      const remoteUpdatedAt = new Date(
+        candidate?.lifecycleUpdatedAt || candidate?.createdAt || 0,
+      ).getTime();
+
+      if (localReceipt?.payoutId === candidate.payoutId && localUpdatedAt >= remoteUpdatedAt) {
+        return;
+      }
+
+      const hydratedReceipt =
+        candidate.lifecycleStatus || candidate.createdAt
+          ? candidate
+          : createPayoutReceipt(candidate);
+
+      savePayoutReceipt(hydratedReceipt);
+      setReceiptState(hydratedReceipt);
+
+      setVerificationState((current) => {
+        const alreadyVerified = hydratedReceipt?.lifecycleStatus === "verified";
+        return {
+          status: alreadyVerified ? "verified" : current.status === "verified" ? "verified" : "idle",
+          gesture: current.gesture || "",
+          gestureKey: current.gestureKey || "",
+          issuedAt: current.issuedAt || "",
+          verifiedAt: alreadyVerified ? hydratedReceipt?.lifecycleUpdatedAt || "" : current.verifiedAt || "",
+          evidence: hydratedReceipt?.receivedWithVerification || current.evidence || null,
+        };
+      });
+
+      pushNotification({
+        type: "info",
+        title: "Payout candidate ready",
+        message: `GigShield queued ${formatCurrency(hydratedReceipt.payoutAmount || 0)} for verification.`,
+      });
+    };
+
+    hydrateBackendPayoutCandidate();
+
+    return () => {
+      alive = false;
+    };
+  }, [session?.workerId]);
 
   const receipt = receiptState;
   const verificationRequiredForPayout = true;
@@ -258,6 +315,7 @@ function PayoutPage() {
     if (!(selfieVerified || isLifecycleVerified) || !checksCompleted) {
       pushNotification({
         type: "warning",
+        category: "payouts",
         title: "Verification needed",
         message: "Complete both liveness and gesture selfie checks before payout.",
       });
@@ -278,6 +336,7 @@ function PayoutPage() {
       setReceiptState(tokenBlockedReceipt);
       pushNotification({
         type: "error",
+        category: "payouts",
         title: "Payout blocked",
         message: "Enable session authentication token before payout request.",
       });
@@ -306,6 +365,7 @@ function PayoutPage() {
       setIsProcessing(false);
       pushNotification({
         type: "error",
+        category: "payouts",
         title: "Payout failed",
         message: securityResult.reason,
       });
@@ -346,6 +406,7 @@ function PayoutPage() {
       setIsProcessing(false);
       pushNotification({
         type: "success",
+        category: "payouts",
         title: "Payout settled",
         message: `Receipt ${settledReceipt.payoutId} has been settled successfully.`,
       });
@@ -381,22 +442,22 @@ function PayoutPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.3em] text-cyan-200">
-                {selectLabel(languageMode, "Judge Demo Step 4", "जज डेमो स्टेप 4")}
+                {selectLabel(languageMode, "Payout Workflow", "पेआउट वर्कफ़्लो")}
               </p>
               <p className="mt-2 text-sm leading-7 text-cyan-50/90">
                 {selectLabel(
                   languageMode,
-                  "Use this page to show that once the trigger and verification rules are satisfied, GigShield can move a worker from validation to settled support without claim paperwork.",
-                  "इस पेज से दिखाएं कि ट्रिगर और वेरिफिकेशन नियम पूरे होने के बाद GigShield बिना क्लेम पेपरवर्क के सेटल्ड सपोर्ट तक पहुंच सकता है।",
+                  "Once the trigger and verification rules are satisfied, GigShield can move a worker from validation to settled support without claim paperwork.",
+                  "ट्रिगर और वेरिफिकेशन नियम पूरे होने के बाद GigShield बिना क्लेम पेपरवर्क के सेटल्ड सपोर्ट तक पहुंच सकता है।",
                 )}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
               <Link
-                to="/judge-demo"
+                to="/dashboard"
                 className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.08] px-4 text-[11px] font-black uppercase tracking-[0.2em] text-white transition hover:bg-white/[0.14]"
               >
-                {selectLabel(languageMode, "Demo Story", "डेमो स्टोरी")}
+                {selectLabel(languageMode, "Back To Dashboard", "डैशबोर्ड पर लौटें")}
               </Link>
               <Link
                 to="/admin-ops"
@@ -469,12 +530,6 @@ function PayoutPage() {
                   className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-[11px] font-black uppercase tracking-[0.25em] text-zinc-950 transition hover:bg-zinc-200"
                 >
                   {selectLabel(languageMode, "Open Dashboard", "डैशबोर्ड खोलें")}
-                </Link>
-                <Link
-                  to="/judge-demo"
-                  className="inline-flex h-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-4 text-[11px] font-black uppercase tracking-[0.25em] text-zinc-100 transition hover:border-white/20 hover:bg-white/[0.06]"
-                >
-                  {selectLabel(languageMode, "Open Demo Story", "डेमो स्टोरी खोलें")}
                 </Link>
               </div>
             </AppSurface>

@@ -58,7 +58,7 @@ function FraudGuardPage() {
       highlight="GigShield."
       description={selectLabel(languageMode, "Fraud Guard is the trust layer in GigShield. It uses risk scoring, verification gates, location checks, and moderation logic so payouts go to genuine delivery workers during genuine disruptions.", "Fraud Guard जोखिम स्कोरिंग, लोकेशन चेक और सत्यापन के साथ सही वर्कर्स तक भुगतान पहुंचाता है।")}
       primaryAction={{ to: "/dashboard", label: selectLabel(languageMode, "Open Dashboard", "डैशबोर्ड खोलें") }}
-      secondaryAction={{ to: "/dashboard?trigger=heavy-rain", label: selectLabel(languageMode, "Run Fraud Demo", "फ्रॉड डेमो देखें") }}
+      secondaryAction={{ to: "/dashboard?trigger=heavy-rain", label: selectLabel(languageMode, "Open Fraud View", "फ्रॉड व्यू खोलें") }}
       stats={[
         { label: "Risk states", value: "Low / Medium / High", detail: "Behavior scoring changes how much friction a payout requires." },
         { label: "Location", value: "Validated", detail: "Claim coordinates are checked against expected city zones." },

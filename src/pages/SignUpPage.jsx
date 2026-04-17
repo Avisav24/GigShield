@@ -7,8 +7,7 @@ import { formatCurrency } from "../utils/format";
 import { selectLabel } from "../utils/i18n";
 import { calculateWeeklyPremium } from "../utils/pricing";
 import { useSiteLanguage } from "../utils/siteLanguage";
-import { buildAuthCallbackUrl } from "../utils/authRedirect";
-import { signUpWithEmail } from "../services/backend/sessionService";
+import { signUpWithEmail, signUpWithGoogle } from "../services/backend/sessionService";
 import { AuthPageShell, AuthPanel } from "../components/ui/auth-page-shell";
 
 const selectedPlanStorageKey = "gigshieldSelectedPlanId";
@@ -31,27 +30,8 @@ function SignUpPage({ setSession }) {
   const [isLoading, setIsLoading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
-
-  const handleDemoMode = () => {
-    const demoSession = {
-      isAuthenticated: true,
-      mode: "demo",
-      name: "Demo Rider",
-      email: "rider@demo.app",
-      city: "New Delhi",
-      workerId: "DW-1029",
-      platforms: ["Zomato", "Blinkit"],
-      selectedPlanId,
-      signedInAt: new Date().toISOString(),
-    };
-    
-    import('../utils/session').then(({ saveSession }) => {
-      saveSession(demoSession);
-      if (setSession) setSession(demoSession);
-      navigate(`/dashboard?plan=${selectedPlanId}`);
-    });
-  };
 
   if (isSuccess) {
     return (
@@ -171,15 +151,35 @@ function SignUpPage({ setSession }) {
                 ? selectLabel(languageMode, "Creating account...", "खाता बन रहा है...")
                 : selectLabel(languageMode, "Create account with Email", "ईमेल से खाता बनाएं")}
             </button>
-          </AuthPanel>
 
-          <button
-            type="button"
-            onClick={handleDemoMode}
-            className="flex w-full items-center justify-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm font-semibold text-zinc-300 shadow-sm transition hover:bg-white/10 backdrop-blur-sm"
-          >
-            {selectLabel(languageMode, "Explore as Demo User", "डेमो उपयोगकर्ता के रूप में एक्सप्लोर करें")}
-          </button>
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-[#0d1117] px-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                  {selectLabel(languageMode, "Or continue with", "या जारी रखें")}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                setAuthError(null);
+                localStorage.setItem(selectedPlanStorageKey, selectedPlanId);
+                try {
+                  await signUpWithGoogle({ planId: selectedPlanId });
+                } catch (err) {
+                  setAuthError(err.message || "Google sign-up failed.");
+                }
+              }}
+              className="flex w-full items-center justify-center gap-3 rounded-[1.4rem] border border-white/10 bg-white/[0.05] px-5 py-4 text-sm font-black text-white transition hover:bg-white/[0.08]"
+            >
+              <span className="text-base">G</span>
+              {selectLabel(languageMode, "Continue with Google", "Google के साथ जारी रखें")}
+            </button>
+          </AuthPanel>
 
           <AuthPanel>
             <div className="flex items-center gap-3 mb-4">

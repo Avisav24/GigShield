@@ -61,6 +61,8 @@ export async function fetchDashboardMetrics({ city } = {}) {
       supabase
         .from("trigger_events")
         .select("trigger_key, status, severity, city, created_at")
+        .neq("status", "expired")
+        .neq("status", "dismissed")
         .gte("created_at", weekIso)
         .order("created_at", { ascending: false })
         .limit(100),

@@ -28,7 +28,7 @@ function mapRowToRadar(row) {
     demoStory:
       row.demo_story && typeof row.demo_story === "object"
         ? row.demo_story
-        : { title: "Judge demo story", setup: "", move: "", fallback: "" },
+        : { title: "Protection flow", setup: "", move: "", fallback: "" },
   };
 }
 

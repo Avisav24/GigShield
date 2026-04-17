@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import LanguageToggle from "../components/LanguageToggle";
 import { useSiteLanguage } from "../utils/siteLanguage";
 import { selectLabel } from "../utils/i18n";
@@ -18,6 +18,8 @@ import { fetchModerationActions, persistAnomalyEvents, saveModerationAction } fr
 import { AppPageShell, AppSurface } from "../components/ui/app-page-shell";
 import { useHydratedSession } from "../hooks/useHydratedSession";
 import { fetchOperationsInsights } from "../services/backend/operationsInsightsService";
+import { runSignalIngestionSweep } from "../services/backend/signalIngestionService";
+import { pushNotification } from "../utils/notifications";
 
 function AdminOperationsPage() {
   const { languageMode, setLanguageMode } = useSiteLanguage();
@@ -34,6 +36,19 @@ function AdminOperationsPage() {
   });
   const [recentDisruptions, setRecentDisruptions] = useState([]);
   const [recentAutomationScans, setRecentAutomationScans] = useState([]);
+  const [signalSweepState, setSignalSweepState] = useState({
+    loading: false,
+    scannedAt: "",
+    syncedCount: 0,
+    expiredCount: 0,
+    generatedClaimsCount: 0,
+    generatedClaims: [],
+    generatedPayoutsCount: 0,
+    generatedPayouts: [],
+    scans: [],
+    error: "",
+  });
+  const [autoSweepEnabled, setAutoSweepEnabled] = useState(true);
 
   const flaggedQueue = useMemo(
     () => history.filter((item) => item.lifecycleStatus === "failed" || item.failureReasonCode),
@@ -205,6 +220,64 @@ function AdminOperationsPage() {
     refresh();
   };
 
+  const handleRunSignalSweep = useCallback(async (source = "manual") => {
+    setSignalSweepState((current) => ({
+      ...current,
+      loading: true,
+      error: "",
+    }));
+
+    try {
+      const result = await runSignalIngestionSweep();
+      setSignalSweepState({
+        loading: false,
+        scannedAt: result.scannedAt,
+        syncedCount: result.syncedCount,
+        expiredCount: result.expiredCount || 0,
+        generatedClaimsCount: result.generatedClaimsCount || 0,
+        generatedClaims: result.generatedClaims || [],
+        generatedPayoutsCount: result.generatedPayoutsCount || 0,
+        generatedPayouts: result.generatedPayouts || [],
+        scans: result.scans,
+        error: "",
+      });
+
+      if (source === "manual" || result.generatedClaimsCount > 0 || result.generatedPayoutsCount > 0) {
+        pushNotification({
+          type: "info",
+          title: source === "manual" ? "Live sweep completed" : "Background sweep updated",
+          message: `Synced ${result.syncedCount} disruptions, ${result.generatedClaimsCount || 0} claims, ${result.generatedPayoutsCount || 0} payout candidates.`,
+        });
+      }
+
+      const insights = await fetchOperationsInsights({ city: session?.city });
+      if (insights) {
+        setRecentDisruptions(insights.recentDisruptions || []);
+        setRecentAutomationScans(insights.recentAutomationScans || []);
+      }
+    } catch (error) {
+      setSignalSweepState((current) => ({
+        ...current,
+        loading: false,
+        error: error?.message || "Signal sweep failed",
+      }));
+    }
+  }, [session?.city]);
+
+  useEffect(() => {
+    if (!autoSweepEnabled) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void handleRunSignalSweep("interval");
+    }, 120000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [autoSweepEnabled, handleRunSignalSweep]);
+
   return (
     <AppPageShell
       badge="Admin Ops"
@@ -286,6 +359,132 @@ function AdminOperationsPage() {
                   </div>
                 ))}
               </div>
+            </AppSurface>
+          </section>
+
+          <section>
+            <AppSurface className="p-8">
+              <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">Signal Sweep</p>
+                  <p className="text-sm font-medium text-zinc-300">
+                    Run a live multi-city weather and AQI sweep, then write detected disruptions into backend trigger events.
+                  </p>
+                  {signalSweepState.scannedAt ? (
+                    <p className="mt-2 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+                      Last run: {new Date(signalSweepState.scannedAt).toLocaleString()} · Synced {signalSweepState.syncedCount} events · Expired {signalSweepState.expiredCount} stale events · Created {signalSweepState.generatedClaimsCount} claim candidates · Queued {signalSweepState.generatedPayoutsCount} payout candidates
+                    </p>
+                  ) : null}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRunSignalSweep("manual")}
+                  disabled={signalSweepState.loading}
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-white px-4 text-[10px] font-black uppercase tracking-[0.25em] text-zinc-950 transition hover:bg-zinc-200 disabled:cursor-wait disabled:opacity-60"
+                >
+                  {signalSweepState.loading ? "Running Sweep..." : "Run Live Signal Sweep"}
+                </button>
+              </div>
+
+              <div className="mt-4 flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                    Auto Sweep While Open
+                  </p>
+                  <p className="mt-1 text-xs font-medium text-zinc-300">
+                    Runs every 2 minutes while this admin page stays open.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAutoSweepEnabled((current) => !current)}
+                  className={`inline-flex h-10 items-center justify-center rounded-xl px-4 text-[10px] font-black uppercase tracking-[0.2em] transition ${
+                    autoSweepEnabled
+                      ? "bg-emerald-400 text-zinc-950 hover:bg-emerald-300"
+                      : "border border-white/10 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {autoSweepEnabled ? "Enabled" : "Disabled"}
+                </button>
+              </div>
+
+              {signalSweepState.error ? (
+                <p className="mt-4 text-sm font-semibold text-red-300">{signalSweepState.error}</p>
+              ) : null}
+
+              {signalSweepState.scans.length > 0 ? (
+                <div className="mt-6 grid gap-3 md:grid-cols-3">
+                  {signalSweepState.scans.map((scan) => (
+                    <div key={`${scan.city}-${scan.scannedAt}`} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-xs font-black text-white">{scan.city}</p>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-zinc-500">{scan.riskLevel}</span>
+                      </div>
+                      <p className="mt-2 text-[11px] font-medium text-zinc-300">{scan.notification}</p>
+                      {scan.zoneName ? (
+                        <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Zone: {scan.zoneName}
+                        </p>
+                      ) : null}
+                      <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                        Trigger: {scan.triggerKey || "none"} · Confidence: {scan.confidence}%
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+
+              {signalSweepState.generatedClaims.length > 0 ? (
+                <div className="mt-6">
+                  <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                    Auto Claim Candidates
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {signalSweepState.generatedClaims.slice(0, 6).map((claim) => (
+                      <div
+                        key={claim.id}
+                        className="rounded-2xl border border-emerald-400/20 bg-emerald-500/[0.06] p-4"
+                      >
+                        <p className="text-[11px] font-black uppercase tracking-widest text-emerald-300">
+                          {claim.claim_number}
+                        </p>
+                        <p className="mt-2 text-xs font-semibold text-white">
+                          Worker {String(claim.worker_profile_id).slice(0, 8)} · {claim.status}
+                        </p>
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Trigger {String(claim.trigger_event_id).slice(0, 8)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+
+              {signalSweepState.generatedPayouts.length > 0 ? (
+                <div className="mt-6">
+                  <p className="mb-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                    Payout Candidates
+                  </p>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {signalSweepState.generatedPayouts.slice(0, 6).map((payout) => (
+                      <div
+                        key={payout.id}
+                        className="rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.06] p-4"
+                      >
+                        <p className="text-[11px] font-black uppercase tracking-widest text-cyan-300">
+                          {payout.payout_id}
+                        </p>
+                        <p className="mt-2 text-xs font-semibold text-white">
+                          Ready for verification · {payout.status}
+                        </p>
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                          Amount pending {Number(payout.payout_amount || 0)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </AppSurface>
           </section>
 

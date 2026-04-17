@@ -39,7 +39,7 @@ export async function hydrateSessionFromSupabase() {
       safeQuery(
         supabase
           .from("worker_profiles")
-          .select("worker_id, city, work_pattern, weekly_earnings_band")
+          .select("worker_id, city, work_pattern, weekly_earnings_band, preferred_zones")
           .eq("profile_id", authUser.id)
           .maybeSingle()
       ),
@@ -91,6 +91,9 @@ export async function hydrateSessionFromSupabase() {
       signedInAt: new Date().toISOString(),
       workPattern: workerProfile?.work_pattern || "",
       weeklyEarningsBand: workerProfile?.weekly_earnings_band || "",
+      preferredZones: Array.isArray(workerProfile?.preferred_zones)
+        ? workerProfile.preferred_zones
+        : [],
     };
 
     saveSession(sessionPayload);
@@ -102,7 +105,7 @@ export async function hydrateSessionFromSupabase() {
 }
 
 export async function signInWithEmail({ email, password }) {
-  const { data, error } = await supabase.auth.signInWithPassword({
+  const { error } = await supabase.auth.signInWithPassword({
     email,
     password,
   });
@@ -114,6 +117,25 @@ export async function signInWithEmail({ email, password }) {
   // Return the fully hydrated session payload instead of the raw Supabase data
   const hydrated = await hydrateSessionFromSupabase();
   return hydrated || getSession();
+}
+
+export async function signInWithGoogle({ planId } = {}) {
+  const { buildAuthCallbackUrl } = await import("../../utils/authRedirect");
+
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: buildAuthCallbackUrl({ planId }),
+      queryParams: {
+        access_type: "offline",
+        prompt: "select_account",
+      },
+    },
+  });
+
+  if (error) {
+    throw error;
+  }
 }
 
 export async function signUpWithEmail({ email, password, fullName }) {
@@ -138,6 +160,10 @@ export async function signUpWithEmail({ email, password, fullName }) {
   }
 
   return data;
+}
+
+export async function signUpWithGoogle({ planId } = {}) {
+  return signInWithGoogle({ planId });
 }
 
 export async function signOutSession() {

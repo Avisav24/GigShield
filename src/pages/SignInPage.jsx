@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ShieldCheck, Smartphone, CloudRain, Wallet, Mail, LockKeyhole } from "lucide-react";
+import { ShieldCheck, CloudRain, Wallet, Mail, LockKeyhole } from "lucide-react";
 import planDetails from "../data/planDetails.json";
 import userProfile from "../data/userProfile.json";
 import { formatCurrency } from "../utils/format";
 import { selectLabel } from "../utils/i18n";
 import { calculateWeeklyPremium } from "../utils/pricing";
 import { useSiteLanguage } from "../utils/siteLanguage";
-import { saveSession } from "../utils/session";
-import { signInWithEmail } from "../services/backend/sessionService";
+import { signInWithEmail, signInWithGoogle } from "../services/backend/sessionService";
 import { AuthPageShell, AuthPanel } from "../components/ui/auth-page-shell";
 
 const validPlanIds = new Set(planDetails.map((p) => p.id));
@@ -31,36 +30,6 @@ function SignInPage({ setSession }) {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
-  const handleDemoSignIn = () => {
-    const premiumData = calculateWeeklyPremium({
-      basePremium: selectedPlan.weeklyPremium,
-      platformCount: 2,
-      riskLevel: "Medium",
-    });
-    
-    const demoSession = {
-      isAuthenticated: true,
-      mode: "demo",
-      name: userProfile.name,
-      email: "demo@gigshield.app",
-      city: userProfile.city,
-      workerId: "demo-worker",
-      platforms: ["Zomato", "Swiggy"],
-      selectedPlanId,
-      riskLevel: "Medium",
-      calculatedWeeklyPremium: premiumData.adjustedPremium,
-      premiumBreakdown: premiumData,
-      premiumHistory: [],
-      signedInAt: new Date().toISOString(),
-    };
-
-    saveSession(demoSession);
-    if (setSession) setSession(demoSession);
-    
-    localStorage.setItem(selectedPlanStorageKey, selectedPlanId);
-    navigate(`/dashboard?plan=${selectedPlanId}`);
-  };
 
   return (
     <AuthPageShell
@@ -171,16 +140,33 @@ function SignInPage({ setSession }) {
                 </button>
               </div>
 
-              <div className="animate-enter" style={{ animationDelay: '100ms' }}>
-                <button
-                  type="button"
-                  onClick={handleDemoSignIn}
-                  className="group flex w-full items-center justify-center gap-4 rounded-[2.2rem] border-2 border-cyan-400/30 bg-cyan-400/10 px-8 py-5 text-sm font-black uppercase tracking-[0.2em] text-cyan-200 shadow-2xl shadow-cyan-950/20 transition-all hover:bg-cyan-400/20 hover:scale-[1.02] active:scale-[0.98]"
-                >
-                  <Smartphone className="h-5 w-5 text-cyan-400" />
-                  <span>{selectLabel(languageMode, "Launch Guided Demo", "गाइडेड डेमो शुरू करें")}</span>
-                </button>
+            <div className="relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10" />
               </div>
+              <div className="relative flex justify-center">
+                <span className="bg-[#0d1117] px-3 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
+                  {selectLabel(languageMode, "Or continue with", "या जारी रखें")}
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={async () => {
+                setAuthError(null);
+                localStorage.setItem(selectedPlanStorageKey, selectedPlanId);
+                try {
+                  await signInWithGoogle({ planId: selectedPlanId });
+                } catch (err) {
+                  setAuthError(err.message || "Google sign-in failed.");
+                }
+              }}
+              className="flex w-full items-center justify-center gap-3 rounded-[1.4rem] border border-white/10 bg-white/[0.05] px-5 py-4 text-sm font-black text-white transition hover:bg-white/[0.08]"
+            >
+              <span className="text-base">G</span>
+              {selectLabel(languageMode, "Continue with Google", "Google के साथ जारी रखें")}
+            </button>
           </div>
         </AuthPanel>
 

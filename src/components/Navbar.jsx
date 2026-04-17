@@ -19,25 +19,10 @@ export default function Navbar() {
     { label: "Income Radar", path: "/income-radar" },
     { label: "Pricing", path: "/pricing" },
     { label: "Protection", path: "/triggers" },
-    { label: "Demo Story", path: "/judge-demo" },
     { label: "Get Protected", path: "/get-protected" },
   ];
 
   const isNavItemActive = (path) => {
-    if (path === "/judge-demo") {
-      return [
-        "/judge-demo",
-        "/dashboard",
-        "/payout",
-        "/payout-received",
-        "/payout-history",
-        "/predictive-history",
-        "/community-heatmap",
-        "/team-protection",
-        "/support",
-      ].includes(location.pathname);
-    }
-
     if (path === "/triggers") {
       return ["/triggers", "/fraud-guard", "/trust-center", "/admin", "/admin-ops"].includes(location.pathname);
     }
@@ -98,6 +83,19 @@ export default function Navbar() {
                 );
               })}
             </div>
+            {user ? (
+              <button
+                type="button"
+                onClick={() => navigateTo("/profile")}
+                className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition ${
+                  location.pathname === "/profile"
+                    ? "border-white bg-white text-zinc-950"
+                    : "border-white/10 bg-white/[0.04] text-zinc-100 hover:bg-white/[0.08]"
+                }`}
+              >
+                Profile
+              </button>
+            ) : null}
             <LanguageToggle
               languageMode={languageMode}
               setLanguageMode={setLanguageMode}
@@ -121,8 +119,8 @@ export default function Navbar() {
               >
                 {selectLabel(
                   languageMode,
-                  "Access",
-                  "डेमो एक्सेस",
+                  "Login",
+                  "लॉगिन",
                 )}
                 <ArrowRight className="h-4 w-4" />
               </button>
@@ -148,6 +146,19 @@ export default function Navbar() {
         {menuOpen ? (
           <div className="mt-3 rounded-[1.2rem] border border-white/10 bg-white/[0.04] p-3 lg:hidden">
             <div className="grid gap-2">
+              {user ? (
+                <button
+                  type="button"
+                  onClick={() => navigateTo("/profile")}
+                  className={`rounded-2xl border px-4 py-3 text-left text-xs font-black uppercase tracking-[0.18em] transition ${
+                    location.pathname === "/profile"
+                      ? "border-white bg-white text-zinc-950"
+                      : "border-white/10 bg-white/[0.03] text-zinc-100"
+                  }`}
+                >
+                  Profile
+                </button>
+              ) : null}
               {navItems.map((item) => {
                 const active = isNavItemActive(item.path);
                 const isPrimary = item.path === "/get-protected";
@@ -187,7 +198,7 @@ export default function Navbar() {
                   onClick={() => navigateTo("/signin")}
                   className="w-full rounded-2xl bg-white px-4 py-3 text-sm font-semibold text-zinc-950"
                 >
-                  {selectLabel(languageMode, "Judge Demo Access", "डेमो एक्सेस")}
+                  {selectLabel(languageMode, "Login", "लॉगिन")}
                 </button>
               )}
             </div>

@@ -1,8 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "../utils/supabase";
-import { saveSession } from "../utils/session";
-import { calculateWeeklyPremium } from "../utils/pricing";
+import { hydrateSessionFromSupabase } from "../services/backend/sessionService";
 import planDetails from "../data/planDetails.json";
 import userProfile from "../data/userProfile.json";
 
@@ -36,43 +35,28 @@ export default function AuthCallbackPage() {
     userProfile.selectedPlanId;
 
   useEffect(() => {
-    const processCallback = (session) => {
+    const processCallback = async (session) => {
       if (handled.current || !session) return;
       handled.current = true;
 
-      const userMeta = session.user.user_metadata || {};
+      localStorage.setItem("gigshieldSelectedPlanId", selectedPlanId);
+
+      const hydrated = await hydrateSessionFromSupabase();
       const resolvedRole = adminEmailAllowlist.includes(
-        (session.user.email || "").toLowerCase()
+        (session.user.email || "").toLowerCase(),
       )
         ? "admin"
-        : "worker";
+        : hydrated?.role || "worker";
 
-      const selectedPlan =
-        planDetails.find((p) => p.id === selectedPlanId) ?? planDetails[0];
-
-      const premium = calculateWeeklyPremium({
-        basePremium: selectedPlan.weeklyPremium,
-        platformCount: 2,
-        riskLevel: "Medium",
-      });
-
-      saveSession({
-        isAuthenticated: true,
-        mode: "oauth",
-        role: resolvedRole,
-        authToken: session.access_token,
-        name: userMeta.full_name || userProfile.name,
-        email: session.user.email,
-        city: userMeta.city || "Bangalore",
-        workerId: "RIDER-" + session.user.id.substring(0, 6).toUpperCase(),
-        platforms: ["Zomato", "Swiggy"],
-        selectedPlanId,
-        riskLevel: "Medium",
-        calculatedWeeklyPremium: premium.adjustedPremium,
-        premiumBreakdown: premium,
-        premiumHistory: [],
-        signedInAt: new Date().toISOString(),
-      });
+      if (hydrated) {
+        navigate(
+          resolvedRole === "admin"
+            ? "/admin-ops"
+            : `/dashboard?plan=${selectedPlanId}`,
+          { replace: true },
+        );
+        return;
+      }
 
       navigate(`/dashboard?plan=${selectedPlanId}`, { replace: true });
     };
@@ -98,10 +82,10 @@ export default function AuthCallbackPage() {
   }, [navigate, selectedPlanId]);
 
   return (
-    <div className="min-h-screen bg-[#f8f9fb] flex items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center bg-[#09090b]">
       <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 border-4 border-[#1a2229] border-t-transparent rounded-full animate-spin" />
-        <p className="text-sm font-semibold text-gray-500 tracking-wide">
+        <div className="h-10 w-10 rounded-full border-4 border-white/15 border-t-cyan-300 animate-spin" />
+        <p className="text-sm font-semibold tracking-wide text-zinc-400">
           Signing you in…
         </p>
       </div>

@@ -51,7 +51,7 @@ export default function StepRiderProof({ formData, updateField, onNext }) {
       <div>
         <p className="kicker mb-1">Step 3 of 4</p>
         <h2 className="hero-title text-3xl sm:text-4xl leading-tight">Upload rider proof</h2>
-        <p className="mt-2 text-coal-500 text-sm">Upload a screenshot of your delivery profile or dashboard</p>
+        <p className="mt-2 text-sm text-zinc-400">Upload a screenshot of your delivery profile or dashboard</p>
       </div>
 
       {!formData.riderProofPreview ? (
@@ -59,19 +59,19 @@ export default function StepRiderProof({ formData, updateField, onNext }) {
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onClick={() => fileRef.current?.click()}
-          className="board-soft cursor-pointer rounded-2xl border-2 border-dashed border-coal-300 p-10 text-center hover:border-electric-500 hover:bg-electric-50 transition-all duration-200 group"
+          className="board-soft group cursor-pointer rounded-2xl border-2 border-dashed border-white/15 p-10 text-center transition-all duration-200 hover:border-cyan-300/60 hover:bg-cyan-300/5"
         >
           <div className="mb-4 flex justify-center">
-            <div className="h-14 w-14 rounded-full bg-coal-100 group-hover:bg-electric-100 flex items-center justify-center transition-colors">
-              <svg className="w-7 h-7 text-coal-500 group-hover:text-electric-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/[0.06] transition-colors group-hover:bg-cyan-300/10">
+              <svg className="h-7 w-7 text-zinc-400 transition-colors group-hover:text-cyan-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
               </svg>
             </div>
           </div>
-          <p className="font-semibold text-coal-700 group-hover:text-electric-600 transition-colors">
+          <p className="font-semibold text-zinc-100 transition-colors group-hover:text-cyan-200">
             Click to upload or drag & drop
           </p>
-          <p className="mt-1 text-xs text-coal-400">PNG, JPG, WEBP up to 10MB</p>
+          <p className="mt-1 text-xs text-zinc-500">PNG, JPG, WEBP up to 10MB</p>
           <input
             ref={fileRef}
             type="file"
@@ -81,18 +81,16 @@ export default function StepRiderProof({ formData, updateField, onNext }) {
           />
         </div>
       ) : (
-        <div className="relative rounded-2xl overflow-hidden border border-coal-200 shadow-chip">
+        <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)]">
           <img src={formData.riderProofPreview} alt="Rider proof preview" className={`w-full max-h-56 object-cover transition-all duration-500 ${status === 'verifying' ? 'blur-sm brightness-75' : ''}`} />
           
           {status === "verifying" && (
             <>
-              {/* Scan overlay */}
-              <div className="absolute inset-0 bg-electric-900/20 mix-blend-color-burn" />
-              {/* Animated scan line */}
-              <div className="absolute left-0 right-0 h-1 bg-electric-400 shadow-[0_0_15px_rgba(59,130,246,0.8)] animate-scan-line" />
+              <div className="absolute inset-0 bg-cyan-950/30 mix-blend-screen" />
+              <div className="absolute left-0 right-0 h-1 animate-scan-line bg-cyan-300 shadow-[0_0_18px_rgba(103,232,249,0.7)]" />
               
               <div className="absolute inset-0 flex flex-col items-center justify-center z-10 animate-enter">
-                <div className="h-12 w-12 rounded-full border-t-2 border-r-2 border-electric-400 border-solid animate-spin mb-3"></div>
+                <div className="mb-3 h-12 w-12 animate-spin rounded-full border-r-2 border-t-2 border-solid border-cyan-300"></div>
                 <p className="text-white font-semibold text-sm tracking-wider uppercase drop-shadow-md">AI Analyzing</p>
                 <p className="text-white/90 text-xs mt-1 drop-shadow-md font-medium">Verifying platform profile...</p>
               </div>
@@ -100,26 +98,26 @@ export default function StepRiderProof({ formData, updateField, onNext }) {
           )}
 
           {status === "success" && (
-            <div className="absolute inset-0 bg-moss-900/80 flex flex-col items-center justify-center z-10 animate-enter backdrop-blur-[2px]">
-              <div className="h-16 w-16 mb-2 rounded-full bg-moss-500/30 flex items-center justify-center">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-emerald-950/80 backdrop-blur-[2px] animate-enter">
+              <div className="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400/20">
                 <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                 </svg>
               </div>
               <p className="text-white font-semibold text-lg tracking-wide drop-shadow-md">Verification Complete</p>
-              <p className="text-moss-100 text-xs mt-1">Profile matched with input data.</p>
+              <p className="mt-1 text-xs text-emerald-100">Profile matched with input data.</p>
             </div>
           )}
 
           {status === "idle" && (
             <>
-              <div className="absolute inset-0 bg-gradient-to-t from-coal-900/60 to-transparent pointer-events-none" />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent" />
               <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
                 <span className="text-white text-xs font-semibold truncate">{formData.riderProof?.name}</span>
                 <button
                   type="button"
                   onClick={() => { updateField("riderProof", null); updateField("riderProofPreview", null); setStatus("idle"); }}
-                  className="ml-2 rounded-full bg-white/20 px-3 py-1 text-white text-xs font-semibold hover:bg-white/30 transition shadow-sm backdrop-blur-md"
+                  className="ml-2 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold text-white transition hover:bg-white/25 shadow-sm backdrop-blur-md"
                 >
                   Remove
                 </button>
@@ -130,8 +128,8 @@ export default function StepRiderProof({ formData, updateField, onNext }) {
       )}
 
       {status === "idle" && (
-        <div className="rounded-xl bg-coal-50 border border-coal-200 px-4 py-3 text-xs text-coal-500">
-          <span className="font-semibold text-coal-700">Examples:</span> Swiggy profile screenshot, Zomato rider dashboard, account screen
+        <div className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-xs text-zinc-400">
+          <span className="font-semibold text-zinc-200">Examples:</span> Swiggy profile screenshot, Zomato rider dashboard, account screen
         </div>
       )}
 
@@ -156,7 +154,7 @@ export default function StepRiderProof({ formData, updateField, onNext }) {
         <button
           type="button"
           onClick={onNext}
-          className="text-xs text-coal-400 hover:text-coal-600 transition text-center underline underline-offset-2"
+          className="text-center text-xs text-zinc-500 underline underline-offset-2 transition hover:text-zinc-300"
         >
           Skip for now
         </button>

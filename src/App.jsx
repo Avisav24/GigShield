@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense, useEffect, useRef } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -9,6 +9,12 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useHydratedSession } from "./hooks/useHydratedSession";
 import { getRouterBasename } from "./utils/authRedirect";
+import { pushNotification } from "./utils/notifications";
+import { fetchWorkerClaimAlerts } from "./services/backend/claimStatusService";
+import {
+  fetchLatestOpenPayoutCandidateFromBackend,
+  fetchRecentPayoutAlertsFromBackend,
+} from "./services/backend/payoutService";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -16,8 +22,8 @@ const AuthPage = lazy(() => import("./pages/AuthPage"));
 const AuthCallbackPage = lazy(() => import("./pages/AuthCallbackPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const SignUpPage = lazy(() => import("./pages/SignUpPage"));
-const JudgeDemoPage = lazy(() => import("./pages/JudgeDemoPage"));
 const DashboardPage = lazy(() => import("./pages/DashboardPage"));
+const ProfilePage = lazy(() => import("./pages/ProfilePage"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const PricingPage = lazy(() => import("./pages/PricingPage"));
 const IncomeRadarPage = lazy(() => import("./pages/IncomeRadarPage"));
@@ -130,6 +136,7 @@ function AppShell() {
 
   return (
     <>
+      <WorkerNotificationBridge session={session} sessionReady={sessionReady} />
       <ToastContainer
         position="top-right"
         autoClose={5000}
@@ -154,7 +161,6 @@ function AppShell() {
           >
             <Routes>
               <Route path="/" element={<LandingPage />} />
-              <Route path="/judge-demo" element={<JudgeDemoPage />} />
               <Route path="/product" element={<ProductPage />} />
               <Route path="/income-radar" element={<IncomeRadarPage />} />
               <Route path="/pricing" element={<PricingPage />} />
@@ -172,6 +178,14 @@ function AppShell() {
                 element={
                   <ProtectedRoute session={session} sessionReady={sessionReady}>
                     <DashboardPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/profile"
+                element={
+                  <ProtectedRoute session={session} sessionReady={sessionReady}>
+                    <ProfilePage />
                   </ProtectedRoute>
                 }
               />
@@ -265,6 +279,98 @@ function AppShell() {
       <ARIAChat session={session} />
     </>
   );
+}
+
+function WorkerNotificationBridge({ session, sessionReady }) {
+  const seenIdsRef = useRef(new Set());
+
+  useEffect(() => {
+    if (!sessionReady || !session?.isAuthenticated) {
+      return undefined;
+    }
+
+    let alive = true;
+
+    const syncNotifications = async () => {
+      const [claims, payouts, openPayout] = await Promise.all([
+        fetchWorkerClaimAlerts({ limit: 3 }),
+        fetchRecentPayoutAlertsFromBackend({ limit: 3 }),
+        fetchLatestOpenPayoutCandidateFromBackend(),
+      ]);
+
+      if (!alive) {
+        return;
+      }
+
+      claims.forEach((claim) => {
+        const key = `claim-${claim.id}-${claim.status}`;
+        if (seenIdsRef.current.has(key)) return;
+        seenIdsRef.current.add(key);
+
+        pushNotification({
+          type: claim.status === "paid" || claim.status === "approved" ? "success" : "info",
+          category: "claims",
+          title:
+            claim.status === "approved"
+              ? "Claim approved"
+              : claim.status === "paid"
+                ? "Claim settled"
+                : "Protection started",
+          message:
+            claim.recommendation ||
+            `GigShield created ${claim.claimNumber} for ${claim.city || "your area"}.`,
+        });
+      });
+
+      payouts.forEach((payout) => {
+        const key = `payout-${payout.payoutId}-${payout.lifecycleStatus}`;
+        if (seenIdsRef.current.has(key)) return;
+        seenIdsRef.current.add(key);
+
+        pushNotification({
+          type:
+            payout.lifecycleStatus === "settled"
+              ? "success"
+              : payout.lifecycleStatus === "failed"
+                ? "error"
+                : "info",
+          category: "payouts",
+          title:
+            payout.lifecycleStatus === "settled"
+              ? "Payout settled"
+              : payout.lifecycleStatus === "failed"
+                ? "Payout needs attention"
+                : "Payout queued",
+          message: `${payout.payoutId} · INR ${Number(payout.payoutAmount || 0)}`,
+        });
+      });
+
+      if (openPayout?.payoutId) {
+        const key = `open-payout-${openPayout.payoutId}`;
+        if (!seenIdsRef.current.has(key)) {
+          seenIdsRef.current.add(key);
+          pushNotification({
+            type: "info",
+            category: "payouts",
+            title: "Verification pending",
+            message: `Open the payout flow to verify and receive ${Number(
+              openPayout.payoutAmount || 0,
+            )}.`,
+          });
+        }
+      }
+    };
+
+    syncNotifications();
+    const intervalId = window.setInterval(syncNotifications, 30000);
+
+    return () => {
+      alive = false;
+      window.clearInterval(intervalId);
+    };
+  }, [session?.isAuthenticated, session?.workerId, sessionReady]);
+
+  return null;
 }
 
 export default App;
